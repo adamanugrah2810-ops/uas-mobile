@@ -1,5 +1,5 @@
 name: mobile_auth
-description: A new Flutter project.
+description: "A new Flutter project for Layanan Pengaduan Masyarakat Banten."
 
 publish_to: "none"
 
@@ -12,22 +12,33 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # ADD DEPENDENCIES DI SINI ↓↓↓↓↓
+  # --- DATA & STORAGE ---
   http: ^1.2.0
-  shared_preferences: ^2.5.3
-  flutter_secure_storage: ^8.0.0
-  get: ^4.6.1
-  image_picker: ^1.1.2
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.2
 
+  # --- STATE MANAGEMENT ---
+  get: ^4.6.6
+
+  # --- UI & UX ENHANCEMENT ---
   cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1 # Menambah kesan mewah dengan font modern
+  animations: ^2.0.1 # Efek transisi halaman yang smooth
+
+  # --- MEDIA & FILES ---
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
+
+  # --- ASSETS MANAGEMENT ---
   assets:
     - assets/images/logo_banten.jpg
+
+  # Pastikan file logo_banten.jpg benar-benar ada di folder:
+  # project_folder/assets/images/logo_banten.jpg
