@@ -13,9 +13,7 @@ class HomePage extends StatelessWidget {
 
   Future<String> _getUserName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("userName") ??
-        prefs.getString("name") ??
-        "Admin Banten";
+    return prefs.getString("userName") ?? "Adam Anugrah";
   }
 
   @override
@@ -23,16 +21,17 @@ class HomePage extends StatelessWidget {
     return FutureBuilder<String>(
       future: _getUserName(),
       builder: (context, snapshot) {
-        String name = snapshot.data ?? "Admin Banten";
+        String name = snapshot.data ?? "User";
 
         return Scaffold(
           backgroundColor: _bgLight,
+          // Menghapus AppBar di sini karena sudah ada di DashboardPage
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                //============== HEADER ==============
-                _buildHeader(name),
+                //============== HEADER RINGKAS ==============
+                _buildSimpleHeader(name),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -103,7 +102,7 @@ class HomePage extends StatelessWidget {
 
                       const SizedBox(height: 25),
 
-                      //--- TAMBAHAN BARU: SECTION 7: PROGRES RESOLUSI (Hijau) ---
+                      //--- SECTION 7: PROGRES RESOLUSI ---
                       _buildSectionTitle(
                           "Progres Resolusi Bulanan", "Tren volume"),
                       const SizedBox(height: 12),
@@ -111,69 +110,43 @@ class HomePage extends StatelessWidget {
 
                       const SizedBox(height: 25),
 
-                      //--- TAMBAHAN BARU: SECTION 8: ANALISIS CARD ---
+                      //--- SECTION 8: ANALISIS CARD ---
                       _buildAnalisisInfoCard(),
 
-                      const SizedBox(
-                          height: 100), // Spacer agar tidak tertutup navbar
+                      // Spacer sangat penting agar konten tidak tertutup navbar melayang
+                      const SizedBox(height: 120),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          //============== NAVBAR BAWAH (Melayang & Modern) ==============
-          bottomNavigationBar: _buildBottomNavbar(),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {},
-            backgroundColor: _primaryBlue,
-            elevation: 4,
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
-          ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerDocked,
         );
       },
     );
   }
 
   //---------------------------------------------------------------------
-  // WIDGET HELPERS (KOMPONEN UI)
+  // WIDGET HELPERS
   //---------------------------------------------------------------------
 
-  Widget _buildHeader(String name) {
+  Widget _buildSimpleHeader(String name) {
     return Container(
-      padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 20),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+            bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-              radius: 22,
-              backgroundColor: Color(0xFFE2E8F0),
-              child: Icon(Icons.person, color: Color(0xFF64748B))),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Selamat Datang,",
-                  style: TextStyle(
-                      color: _primaryBlue,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-              Text(name,
-                  style: TextStyle(
-                      color: _textDark,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18)),
-            ],
-          ),
-          const Spacer(),
-          const Icon(Icons.notifications_none_rounded,
-              color: Colors.black, size: 28),
+          Text("Halo, Selamat Datang",
+              style: TextStyle(color: _textGrey, fontSize: 13)),
+          Text(name,
+              style: TextStyle(
+                  color: _textDark, fontWeight: FontWeight.bold, fontSize: 22)),
         ],
       ),
     );
@@ -194,10 +167,11 @@ class HomePage extends StatelessWidget {
   Widget _buildMainStatsCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: _primaryBlue,
-        borderRadius: BorderRadius.circular(20),
+        gradient:
+            LinearGradient(colors: [_primaryBlue, const Color(0xFF6FB1FC)]),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
               color: _primaryBlue.withOpacity(0.3),
@@ -208,19 +182,19 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Total Laporan",
+          const Text("Total Laporan Masuk",
               style: TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text("1,240",
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 32,
+                      fontSize: 35,
                       fontWeight: FontWeight.bold)),
-              Icon(Icons.folder_shared_rounded,
-                  color: Colors.white.withOpacity(0.3), size: 45),
+              Icon(Icons.analytics_rounded,
+                  color: Colors.white.withOpacity(0.3), size: 50),
             ],
           ),
         ],
@@ -234,8 +208,10 @@ class HomePage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black.withOpacity(0.05))),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -295,24 +271,21 @@ class HomePage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("1.8 Hari (Avg)",
+                  const Text("1.8 Hari (Rata-rata)",
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text("Lebih cepat 5% dari bulan lalu",
-                      style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600)),
+                      style: TextStyle(color: Colors.green, fontSize: 11)),
                 ],
               ),
-              Icon(Icons.speed_rounded, color: _primaryBlue, size: 30),
+              Icon(Icons.bolt_rounded, color: Colors.amber, size: 30),
             ],
           ),
           const SizedBox(height: 15),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-                value: 0.8,
+                value: 0.85,
                 minHeight: 8,
                 backgroundColor: _softBlue,
                 color: _primaryBlue),
@@ -334,7 +307,7 @@ class HomePage extends StatelessWidget {
         children: [
           Container(
               width: 4,
-              height: 40,
+              height: 35,
               decoration: BoxDecoration(
                   color: col, borderRadius: BorderRadius.circular(2))),
           const SizedBox(width: 12),
@@ -394,11 +367,11 @@ class HomePage extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(
-              width: 80,
-              height: 80,
+              width: 70,
+              height: 70,
               child: CircularProgressIndicator(
                   value: 0.7,
-                  strokeWidth: 10,
+                  strokeWidth: 8,
                   color: Color(0xFF246BFE),
                   backgroundColor: Color(0xFFF1F5F9))),
           const SizedBox(width: 25),
@@ -425,15 +398,13 @@ class HomePage extends StatelessWidget {
 
   Widget _buildWaveChartCard() {
     return Container(
-      height: 140,
+      height: 120,
       width: double.infinity,
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(20)),
       child: CustomPaint(painter: WavePainter(_primaryBlue)),
     );
   }
-
-  // --- WIDGET TAMBAHAN BARU (BAWAH) ---
 
   Widget _buildResolutionProgressBarChart() {
     return Container(
@@ -462,17 +433,17 @@ class HomePage extends StatelessWidget {
           alignment: Alignment.bottomCenter,
           children: [
             Container(
-                width: 25,
-                height: 120,
+                width: 20,
+                height: 100,
                 decoration: BoxDecoration(
                     color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(6))),
+                    borderRadius: BorderRadius.circular(5))),
             Container(
-                width: 25,
-                height: 120 * pct,
+                width: 20,
+                height: 100 * pct,
                 decoration: BoxDecoration(
                     color: Colors.green[400],
-                    borderRadius: BorderRadius.circular(6))),
+                    borderRadius: BorderRadius.circular(5))),
           ],
         ),
         const SizedBox(height: 8),
@@ -490,41 +461,13 @@ class HomePage extends StatelessWidget {
           border: Border.all(color: _primaryBlue.withOpacity(0.1))),
       child: Row(
         children: [
-          Icon(Icons.analytics_outlined, color: _primaryBlue),
+          Icon(Icons.lightbulb_outline_rounded, color: _primaryBlue),
           const SizedBox(width: 12),
           const Expanded(
               child: Text(
-                  "Analisis: Laporan jalan rusak di Mar-Mei meningkat. Penanganan rata-rata memakan waktu 1.8 hari.",
+                  "Tips: Optimalkan penanganan pada kategori Infrastruktur untuk meningkatkan skor kepuasan publik.",
                   style: TextStyle(fontSize: 11, height: 1.4))),
         ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavbar() {
-    return BottomAppBar(
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-                icon: Icon(Icons.grid_view_rounded, color: _primaryBlue),
-                onPressed: () {}),
-            IconButton(
-                icon: Icon(Icons.assignment_outlined, color: _textGrey),
-                onPressed: () {}),
-            const SizedBox(width: 40),
-            IconButton(
-                icon: Icon(Icons.notifications_none_rounded, color: _textGrey),
-                onPressed: () {}),
-            IconButton(
-                icon: Icon(Icons.person_outline_rounded, color: _textGrey),
-                onPressed: () {}),
-          ],
-        ),
       ),
     );
   }
@@ -536,11 +479,11 @@ class WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color.withOpacity(0.1)
       ..style = PaintingStyle.fill;
     final strokePaint = Paint()
       ..color = color
-      ..strokeWidth = 3
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
     final path = Path();
     path.moveTo(0, size.height * 0.7);
@@ -554,10 +497,6 @@ class WavePainter extends CustomPainter {
     fillPath.close();
     canvas.drawPath(fillPath, paint);
     canvas.drawPath(path, strokePaint);
-    canvas.drawCircle(
-        Offset(size.width * 0.5, size.height * 0.6), 5, Paint()..color = color);
-    canvas.drawCircle(
-        Offset(size.width, size.height * 0.5), 5, Paint()..color = color);
   }
 
   @override

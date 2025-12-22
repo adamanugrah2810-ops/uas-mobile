@@ -6,18 +6,17 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageUltraLuxState();
+  State<ProfilePage> createState() => _ProfilePageWhiteBlueState();
 }
 
-class _ProfilePageUltraLuxState extends State<ProfilePage>
+class _ProfilePageWhiteBlueState extends State<ProfilePage>
     with SingleTickerProviderStateMixin {
-  // ========================= COLOR PALETTE =========================
-  final Color bgColor = const Color(0xFF0C192C);
-  final Color darkBlack = const Color(0xFF000000);
-  final Color primaryBlue = const Color(0xFF0B466C);
-  final Color gold = const Color(0xFFFFD700);
-  final Color cardColor = const Color(0xFF1B2A41);
-  final Color textWhite = Colors.white;
+  // ========================= LUXURY PALETTE =========================
+  final Color bgCanvas = const Color(0xFFF0F4F8);
+  final Color primaryBlue = const Color(0xFF0052D4);
+  final Color accentBlue = const Color(0xFF4364F7);
+  final Color cardWhite = Colors.white;
+  final Color textDark = const Color(0xFF1E293B);
 
   // ========================= USER DATA =========================
   String username = "";
@@ -27,7 +26,7 @@ class _ProfilePageUltraLuxState extends State<ProfilePage>
   // ========================= ANIMATION =========================
   late AnimationController _controller;
   late Animation<double> _fadeAnim;
-  late Animation<double> _scaleAnim;
+  late Animation<Offset> _slideAnim;
 
   @override
   void initState() {
@@ -39,143 +38,205 @@ class _ProfilePageUltraLuxState extends State<ProfilePage>
   void _initAnimation() {
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
 
-    _scaleAnim = Tween<double>(begin: 0.9, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    _slideAnim =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
   }
 
-  // ========================= LOAD USER =========================
   Future<void> _loadUserFromDatabase() async {
     final prefs = await SharedPreferences.getInstance();
-
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     setState(() {
-      username = prefs.getString("userName") ?? "User";
-      email = prefs.getString("userEmail") ?? "-";
+      username = prefs.getString("userName") ?? "User Not Found";
+      email = prefs.getString("userEmail") ?? "email@database.com";
       isLoading = false;
     });
   }
 
-  // ========================= LOGOUT =========================
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-
     if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
+  // ========================= ACTION FUNCTIONS =========================
+
+  void _showProfileInfo() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Informasi Pribadi"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Nama: $username",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text("Email: $email"),
+            const SizedBox(height: 8),
+            const Text("Status: Elite Member"),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Tutup"))
+        ],
+      ),
     );
   }
 
-  // ========================= HEADER =========================
-  Widget _luxHeader() {
-    return FadeTransition(
-      opacity: _fadeAnim,
-      child: ScaleTransition(
-        scale: _scaleAnim,
-        child: Container(
-          padding: const EdgeInsets.all(30),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                darkBlack.withOpacity(0.95),
-                primaryBlue.withOpacity(0.95),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+  void _showSecuritySheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(25),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 20),
+            Text("Keamanan Akun",
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textDark)),
+            const SizedBox(height: 20),
+            ListTile(
+              leading:
+                  const Icon(Icons.lock_reset_rounded, color: Colors.indigo),
+              title: const Text("Ubah Kata Sandi"),
+              onTap: () => Navigator.pop(context),
             ),
-            borderRadius: BorderRadius.circular(35),
+            ListTile(
+              leading: const Icon(Icons.phonelink_lock_rounded,
+                  color: Colors.indigo),
+              title: const Text("Autentikasi Dua Faktor"),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _contactSupport() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Menghubungkan ke Pusat Bantuan..."),
+        backgroundColor: primaryBlue,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // ========================= UI COMPONENTS =========================
+
+  Widget _luxHeader() {
+    return SlideTransition(
+      position: _slideAnim,
+      child: FadeTransition(
+        opacity: _fadeAnim,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+          decoration: BoxDecoration(
+            color: cardWhite,
+            borderRadius: BorderRadius.circular(40),
             boxShadow: [
               BoxShadow(
-                color: gold.withOpacity(0.4),
-                blurRadius: 40,
-                spreadRadius: 3,
+                color: primaryBlue.withOpacity(0.1),
+                blurRadius: 30,
+                offset: const Offset(0, 20),
               ),
             ],
           ),
           child: Column(
             children: [
-              // ================= AVATAR =================
-              Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: gold, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: gold.withOpacity(0.8),
-                      blurRadius: 30,
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient:
+                          LinearGradient(colors: [primaryBlue, accentBlue]),
                     ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  backgroundColor: cardColor,
-                  child: Icon(
-                    Icons.person_pin,
-                    size: 85,
-                    color: gold,
                   ),
-                ),
+                  Container(
+                    width: 130,
+                    height: 130,
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.all(5),
+                      child: CircleAvatar(
+                        backgroundColor: bgCanvas,
+                        child: Icon(Icons.person_rounded,
+                            size: 80, color: primaryBlue),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 5,
+                    right: 5,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                          color: Colors.green, shape: BoxShape.circle),
+                      child: const Icon(Icons.check,
+                          color: Colors.white, size: 15),
+                    ),
+                  )
+                ],
               ),
+              const SizedBox(height: 25),
+              Text(username,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: textDark,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900)),
+              const SizedBox(height: 5),
+              Text(email,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
               const SizedBox(height: 20),
-
-              // ================= NAME =================
-              Text(
-                username,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: textWhite,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              // ================= EMAIL =================
-              Text(
-                email,
-                style: TextStyle(
-                  color: textWhite.withOpacity(0.6),
-                  fontSize: 16,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              // ================= BADGE =================
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [gold, Colors.orangeAccent],
-                  ),
-                  borderRadius: BorderRadius.circular(30),
+                  color: primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: primaryBlue.withOpacity(0.2)),
                 ),
-                child: const Text(
-                  "ULTRA PREMIUM MEMBER",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
-                ),
+                child: Text("ELITE MEMBER",
+                    style: TextStyle(
+                        color: primaryBlue,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5)),
               ),
             ],
           ),
@@ -184,118 +245,148 @@ class _ProfilePageUltraLuxState extends State<ProfilePage>
     );
   }
 
-  // ========================= MENU TILE =========================
-  Widget _luxMenu(String title, IconData icon, Color color) {
+  Widget _luxMenu(
+      String title, IconData icon, Color iconColor, VoidCallback onTap) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          colors: [
-            cardColor,
-            cardColor.withOpacity(0.8),
-          ],
-        ),
+        color: cardWhite,
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.45),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 15,
+              offset: const Offset(0, 5))
         ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("$title diklik")),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          child: Row(
-            children: [
-              Icon(icon, color: color, size: 30),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: textWhite,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(25),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(15)),
+                  child: Icon(icon, color: iconColor, size: 24),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 18,
-                color: textWhite.withOpacity(0.5),
-              )
-            ],
+                const SizedBox(width: 20),
+                Expanded(
+                    child: Text(title,
+                        style: TextStyle(
+                            color: textDark,
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold))),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16, color: Colors.grey.shade400),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ========================= BUILD =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: bgCanvas,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        title: Text("P R O F I L E",
+            style: TextStyle(
+                color: textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                letterSpacing: 2)),
+      ),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.amber),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 50),
-
-                  _luxHeader(),
-
-                  const SizedBox(height: 45),
-
-                  Text(
-                    "Account Settings",
-                    style: TextStyle(
-                      color: textWhite,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  _luxMenu("Edit Profile", Icons.edit, primaryBlue),
-                  _luxMenu("Change Password", Icons.lock, Colors.redAccent),
-                  _luxMenu(
-                      "Security & Privacy", Icons.security, Colors.greenAccent),
-                  _luxMenu("About Application", Icons.info, gold),
-
-                  const SizedBox(height: 35),
-
-                  // ================= LOGOUT =================
-                  ElevatedButton.icon(
-                    onPressed: _logout,
-                    icon: const Icon(Icons.logout),
-                    label: const Text("LOG OUT"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade900,
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
+          ? Center(
+              child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryBlue)))
+          : Stack(
+              children: [
+                Positioned(
+                    top: -100,
+                    right: -100,
+                    child: CircleAvatar(
+                        radius: 150,
+                        backgroundColor: primaryBlue.withOpacity(0.05))),
+                SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 120, 20, 40),
+                  child: Column(
+                    children: [
+                      _luxHeader(),
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Pengaturan Akun",
+                              style: TextStyle(
+                                  color: textDark,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900)),
+                          Text("Lihat Semua",
+                              style: TextStyle(
+                                  color: primaryBlue,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold)),
+                        ],
                       ),
-                      elevation: 12,
-                    ),
-                  ),
+                      const SizedBox(height: 20),
 
-                  const SizedBox(height: 50),
-                ],
-              ),
+                      // IMPLEMENTASI MENU FUNGSIONAL
+                      _luxMenu(
+                          "Informasi Pribadi",
+                          Icons.person_outline_rounded,
+                          primaryBlue,
+                          _showProfileInfo),
+                      _luxMenu("Keamanan Akun", Icons.shield_moon_outlined,
+                          Colors.indigo, _showSecuritySheet),
+                      _luxMenu("Notifikasi", Icons.notifications_none_rounded,
+                          Colors.orange, () {}),
+                      _luxMenu("Pusat Bantuan", Icons.help_outline_rounded,
+                          Colors.teal, _contactSupport),
+
+                      const SizedBox(height: 30),
+                      GestureDetector(
+                        onTap: _logout,
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: [
+                              Colors.red.shade400,
+                              Colors.red.shade700
+                            ]),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.red.withOpacity(0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 8))
+                            ],
+                          ),
+                          child: const Center(
+                              child: Text("LOGOUT ACCOUNT",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1))),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
     );
   }
