@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -5,246 +6,303 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageLuxState();
+  State<ProfilePage> createState() => _ProfilePageUltraLuxState();
 }
 
-class _ProfilePageLuxState extends State<ProfilePage> {
-  // ✨ Skema Warna Mewah: Dark Teal/Black dan Aksen Emas
-  final Color _deepBlack = const Color(0xFF000000);
-  final Color _background =
-      const Color(0xFF0C192C);
-  final Color _primaryColor = const Color(0xFF0B466C);
-  final Color _accentColor = const Color(0xFFFFD700);
-  final Color _cardColor =
-      const Color(0xFF1B2A41);
-  final Color _textColor = Colors.white;
+class _ProfilePageUltraLuxState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
+  // ========================= COLOR PALETTE =========================
+  final Color bgColor = const Color(0xFF0C192C);
+  final Color darkBlack = const Color(0xFF000000);
+  final Color primaryBlue = const Color(0xFF0B466C);
+  final Color gold = const Color(0xFFFFD700);
+  final Color cardColor = const Color(0xFF1B2A41);
+  final Color textWhite = Colors.white;
 
-  String userName = "Memuat...";
-  String userEmail = "Memuat...";
+  // ========================= USER DATA =========================
+  String username = "";
+  String email = "";
+  bool isLoading = true;
+
+  // ========================= ANIMATION =========================
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _initAnimation();
+    _loadUserFromDatabase();
   }
 
-  // --- LOGIC: Memuat Data dari SharedPreferences ---
-  Future<void> _loadUser() async {
+  void _initAnimation() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+
+    _scaleAnim = Tween<double>(begin: 0.9, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _controller.forward();
+  }
+
+  // ========================= LOAD USER =========================
+  Future<void> _loadUserFromDatabase() async {
     final prefs = await SharedPreferences.getInstance();
-    await Future.delayed(
-        const Duration(milliseconds: 500)); // Simulasi penundaan
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
     setState(() {
-      userName = prefs.getString("userName") ?? "Adam Anugrah";
-      userEmail = prefs.getString("userEmail") ?? "adamanugrah1012@gmail.com";
+      username = prefs.getString("userName") ?? "User";
+      email = prefs.getString("userEmail") ?? "-";
+      isLoading = false;
     });
   }
 
-  // --- WIDGET KOMPONEN TERPISAH (MODULAR) ---
+  // ========================= LOGOUT =========================
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
 
-  // 1. Header Profil Mewah (Menggunakan Glassmorphism Ringan)
-  Widget _buildProfileHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        // Gradien yang lebih dalam
-        gradient: LinearGradient(
-          colors: [_deepBlack.withOpacity(0.8), _primaryColor.withOpacity(0.9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(30), // Sudut yang lebih membulat
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withOpacity(0.4),
-            blurRadius: 30,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Foto Profil Emas dengan Efek Cahaya
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: _accentColor, width: 5),
-              boxShadow: [
-                BoxShadow(
-                  color: _accentColor.withOpacity(0.7),
-                  blurRadius: 25,
-                )
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/login',
+      (route) => false,
+    );
+  }
+
+  // ========================= HEADER =========================
+  Widget _luxHeader() {
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: ScaleTransition(
+        scale: _scaleAnim,
+        child: Container(
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                darkBlack.withOpacity(0.95),
+                primaryBlue.withOpacity(0.95),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: CircleAvatar(
-              backgroundColor: _cardColor.withOpacity(0.8),
-              child: Icon(Icons.person_pin_circle_rounded,
-                  size: 100, color: _accentColor),
-            ),
+            borderRadius: BorderRadius.circular(35),
+            boxShadow: [
+              BoxShadow(
+                color: gold.withOpacity(0.4),
+                blurRadius: 40,
+                spreadRadius: 3,
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          // Nama Pengguna
-          Text(
-            userName,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: _textColor,
-                letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 8),
-          // Email
-          Text(
-            userEmail,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 16,
-                color: _textColor.withOpacity(0.6),
-                fontWeight: FontWeight.w300),
-          ),
-          const SizedBox(height: 15),
-          // Status
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
-            decoration: BoxDecoration(
-              color: _accentColor,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              "Akun Premium Verified",
-              style: TextStyle(
-                  color: _background,
+          child: Column(
+            children: [
+              // ================= AVATAR =================
+              Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: gold, width: 4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gold.withOpacity(0.8),
+                      blurRadius: 30,
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  backgroundColor: cardColor,
+                  child: Icon(
+                    Icons.person_pin,
+                    size: 85,
+                    color: gold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ================= NAME =================
+              Text(
+                username,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textWhite,
+                  fontSize: 30,
                   fontWeight: FontWeight.w900,
-                  fontSize: 12),
-            ),
+                  letterSpacing: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // ================= EMAIL =================
+              Text(
+                email,
+                style: TextStyle(
+                  color: textWhite.withOpacity(0.6),
+                  fontSize: 16,
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              // ================= BADGE =================
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [gold, Colors.orangeAccent],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Text(
+                  "ULTRA PREMIUM MEMBER",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // 2. Tile Menu Mewah (Dengan InkWell untuk Efek Sentuh)
-  Widget _buildMenuTileLux(String title, IconData icon, Color color) {
+  // ========================= MENU TILE =========================
+  Widget _luxMenu(String title, IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(20), // Sudut yang lebih lembut
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: [
+            cardColor,
+            cardColor.withOpacity(0.8),
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.45),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Aksi saat diklik
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("$title diklik")),
-            );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
-            child: Row(
-              children: [
-                Icon(icon, color: color, size: 28),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                        color: _textColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("$title diklik")),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 30),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: textWhite,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 24, color: _textColor.withOpacity(0.5)),
-              ],
-            ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 18,
+                color: textWhite.withOpacity(0.5),
+              )
+            ],
           ),
         ),
       ),
     );
   }
 
-  // --- BUILD METHOD UTAMA ---
+  // ========================= BUILD =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 50), // Ruang atas yang lebih besar
+      backgroundColor: bgColor,
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.amber),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 50),
 
-            // HEADER PROFIL
-            _buildProfileHeader(),
+                  _luxHeader(),
 
-            const SizedBox(height: 40),
+                  const SizedBox(height: 45),
 
-            // JUDUL MENU
-            Text(
-              "Pengaturan Akun",
-              style: TextStyle(
-                  color: _textColor, fontSize: 24, fontWeight: FontWeight.w800),
+                  Text(
+                    "Account Settings",
+                    style: TextStyle(
+                      color: textWhite,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  _luxMenu("Edit Profile", Icons.edit, primaryBlue),
+                  _luxMenu("Change Password", Icons.lock, Colors.redAccent),
+                  _luxMenu(
+                      "Security & Privacy", Icons.security, Colors.greenAccent),
+                  _luxMenu("About Application", Icons.info, gold),
+
+                  const SizedBox(height: 35),
+
+                  // ================= LOGOUT =================
+                  ElevatedButton.icon(
+                    onPressed: _logout,
+                    icon: const Icon(Icons.logout),
+                    label: const Text("LOG OUT"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade900,
+                      minimumSize: const Size(double.infinity, 55),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 50),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-
-            // MENU ACTION MEWAH
-            _buildMenuTileLux(
-                "Edit Profil", Icons.person_rounded, _primaryColor),
-            _buildMenuTileLux(
-                "Ganti Password", Icons.lock_open_rounded, Colors.red.shade600),
-            _buildMenuTileLux("Privasi & Keamanan", Icons.verified_user_rounded,
-                Colors.green.shade400),
-            _buildMenuTileLux("Tentang Aplikasi",
-                Icons.app_settings_alt_rounded, _accentColor),
-            const SizedBox(height: 30),
-
-            // TOMBOL LOGOUT
-            _actionButton("Log Out", Icons.logout_rounded, Colors.red.shade900),
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
     );
   }
 
-  // Widget Tombol Aksi Keren
-  Widget _actionButton(String title, IconData icon, Color color) {
-    return ElevatedButton.icon(
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("$title diklik")),
-        );
-      },
-      icon: Icon(icon, color: _textColor),
-      label: Text(
-        title,
-        style: TextStyle(color: _textColor, fontWeight: FontWeight.bold),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        minimumSize: const Size(double.infinity, 50),
-        elevation: 8,
-        shadowColor: color.withOpacity(0.5),
-      ),
-    );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }
