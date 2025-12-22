@@ -53,24 +53,32 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
     _controller.forward();
   }
 
+  // ========================= LOAD USER DARI DATABASE =========================
   Future<void> _loadUserFromDatabase() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Memberikan delay sedikit agar transisi loading terlihat halus & mewah
     await Future.delayed(const Duration(milliseconds: 800));
+
     setState(() {
-      username = prefs.getString("userName") ?? "Member Premium";
-      email = prefs.getString("userEmail") ?? "premium.user@email.com";
+      // Mengambil data sesuai key yang disimpan saat login
+      username = prefs.getString("userName") ?? "User Not Found";
+      email = prefs.getString("userEmail") ?? "email@database.com";
       isLoading = false;
     });
   }
 
+  // ========================= LOGOUT =========================
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.clear(); // Menghapus semua data session
     if (!mounted) return;
+
+    // Kembali ke halaman login dan hapus semua history navigasi
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
-  // ========================= HEADER LUXURY = : PUTIH BIRU =========================
+  // ========================= HEADER LUXURY =========================
   Widget _luxHeader() {
     return SlideTransition(
       position: _slideAnim,
@@ -91,7 +99,7 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
           ),
           child: Column(
             children: [
-              // AVATAR DENGAN CIRI KHAS MEWAH
+              // AVATAR MEWAH DENGAN RING GRADASI
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -127,7 +135,9 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
-                          color: Colors.green, shape: BoxShape.circle),
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
                       child: const Icon(Icons.check,
                           color: Colors.white, size: 15),
                     ),
@@ -135,25 +145,29 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                 ],
               ),
               const SizedBox(height: 25),
+              // NAMA USER DARI DATABASE
               Text(
                 username,
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   color: textDark,
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 5),
+              // EMAIL USER DARI DATABASE
               Text(
                 email,
                 style: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.grey.shade500,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               const SizedBox(height: 20),
-              // BADGE MEWAH BIRU
+              // BADGE STATUS
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -179,7 +193,7 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
     );
   }
 
-  // ========================= MENU TILE =========================
+  // ========================= MENU ITEM =========================
   Widget _luxMenu(String title, IconData icon, Color iconColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -198,7 +212,9 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(25),
-          onTap: () {},
+          onTap: () {
+            // Tambahkan navigasi menu di sini
+          },
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -216,9 +232,10 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                   child: Text(
                     title,
                     style: TextStyle(
-                        color: textDark,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold),
+                      color: textDark,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Icon(Icons.arrow_forward_ios_rounded,
@@ -231,6 +248,7 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
     );
   }
 
+  // ========================= BUILD METHOD =========================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,26 +258,32 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text("P R O F I L E",
-            style: TextStyle(
-                color: textDark,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                letterSpacing: 2)),
+        title: Text(
+          "P R O F I L E",
+          style: TextStyle(
+            color: textDark,
+            fontWeight: FontWeight.w900,
+            fontSize: 16,
+            letterSpacing: 2,
+          ),
+        ),
       ),
       body: isLoading
           ? Center(
               child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(primaryBlue)))
+                valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+              ),
+            )
           : Stack(
               children: [
-                // AKSEN GRADASI BACKGROUND
+                // AKSEN LINGKARAN BACKGROUND (SOFT GLASS)
                 Positioned(
                   top: -100,
                   right: -100,
                   child: CircleAvatar(
-                      radius: 150,
-                      backgroundColor: primaryBlue.withOpacity(0.05)),
+                    radius: 150,
+                    backgroundColor: primaryBlue.withOpacity(0.05),
+                  ),
                 ),
                 SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 120, 20, 40),
@@ -267,19 +291,26 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                     children: [
                       _luxHeader(),
                       const SizedBox(height: 40),
+                      // SEKSI PENGATURAN
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Pengaturan Akun",
-                              style: TextStyle(
-                                  color: textDark,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900)),
-                          Text("Lihat Semua",
-                              style: TextStyle(
-                                  color: primaryBlue,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            "Pengaturan Akun",
+                            style: TextStyle(
+                              color: textDark,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          Text(
+                            "Lihat Semua",
+                            style: TextStyle(
+                              color: primaryBlue,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -293,17 +324,19 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                           Colors.teal),
                       const SizedBox(height: 30),
 
-                      // LOGOUT BUTTON MEWAH
+                      // LOGOUT BUTTON DENGAN GRADASI MERAH MEWAH
                       GestureDetector(
                         onTap: _logout,
                         child: Container(
                           width: double.infinity,
                           height: 60,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [
-                              Colors.red.shade400,
-                              Colors.red.shade700
-                            ]),
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.red.shade400,
+                                Colors.red.shade700
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
@@ -317,9 +350,10 @@ class _ProfilePageWhiteBlueState extends State<ProfilePage>
                             child: Text(
                               "LOGOUT ACCOUNT",
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1),
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
                         ),
