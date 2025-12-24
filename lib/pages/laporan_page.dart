@@ -66,7 +66,7 @@ class _LaporanPageState extends State<LaporanPage> {
                   const SizedBox(height: 25),
                   _buildStatCards(),
                   const SizedBox(height: 30),
-                  _buildQuickCategories(), // FITUR BARU
+                  _buildQuickCategories(),
                   const SizedBox(height: 30),
                   _buildSearchAndFilter(),
                   const SizedBox(height: 30),
@@ -76,7 +76,7 @@ class _LaporanPageState extends State<LaporanPage> {
                   const SizedBox(height: 15),
                   _buildPremiumReportList(),
                   const SizedBox(height: 30),
-                  _buildSummaryFooter(), // FITUR BARU
+                  _buildSummaryFooter(),
                   const SizedBox(height: 120),
                 ],
               ),
