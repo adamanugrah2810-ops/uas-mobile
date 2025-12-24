@@ -40,9 +40,7 @@ class _LoginPageState extends State<LoginPage>
 
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeOutBack), // Pengganti backOut jika bermasalah
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
@@ -63,10 +61,7 @@ class _LoginPageState extends State<LoginPage>
       backgroundColor: bgCanvas,
       body: Stack(
         children: [
-          // 1. Background Decoration (Soft Blobs)
           _buildBackgroundDecor(),
-
-          // 2. Main Content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnim,
@@ -270,7 +265,7 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildFooter() {
     return TextButton(
       onPressed: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => RegisterPage())),
+          context, MaterialPageRoute(builder: (_) => const RegisterPage())),
       child: RichText(
         text: TextSpan(
           text: "Belum punya akun? ",
@@ -286,27 +281,57 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  // LOGIC LOGIN
+  // LOGIC LOGIN YANG TELAH DIPERBAIKI
   Future<void> login() async {
     FocusScope.of(context).unfocus();
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) return;
+
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Email dan password wajib diisi"),
+          backgroundColor: Colors.orange));
+      return;
+    }
+
     setState(() => loading = true);
 
-    var res = await AuthService()
-        .login(emailController.text, passwordController.text);
+    try {
+      var res = await AuthService()
+          .login(emailController.text, passwordController.text);
 
-    if (res["success"] == true) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool("isLoggedIn", true);
-      if (mounted)
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const DashboardPage()));
-    } else {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(res["message"]), backgroundColor: Colors.redAccent));
+      if (res["success"] == true) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        // 1. Simpan Status Login
+        await prefs.setBool("isLoggedIn", true);
+
+        // 2. Simpan Nama dari Database (Sesuaikan key 'name' dengan response backend Anda)
+        // Jika response backend adalah { "user": { "name": "Adam", ... } }
+        if (res["user"] != null && res["user"]["name"] != null) {
+          await prefs.setString("userName", res["user"]["name"]);
+        } else {
+          await prefs.setString("userName", "User");
+        }
+
+        if (mounted) {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const DashboardPage()));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(res["message"] ?? "Email atau Password salah"),
+              backgroundColor: Colors.redAccent));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Koneksi gagal, silakan coba lagi"),
+            backgroundColor: Colors.redAccent));
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
-    setState(() => loading = false);
   }
 
   @override
