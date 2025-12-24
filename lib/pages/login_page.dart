@@ -20,7 +20,6 @@ class _LoginPageState extends State<LoginPage>
   bool loading = false;
   bool obscurePass = true;
 
-  // Palette Premium (Putih - Biru Luxury)
   final Color bgCanvas = const Color(0xFFF8FAFD);
   final Color primaryBlue = const Color(0xFF0052D4);
   final Color accentBlue = const Color(0xFF4364F7);
@@ -40,9 +39,7 @@ class _LoginPageState extends State<LoginPage>
 
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _scaleAnim = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(
-          parent: _controller,
-          curve: Curves.easeOutBack), // Pengganti backOut jika bermasalah
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
 
     _controller.forward();
@@ -57,16 +54,67 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
+  // --- LOGIC LOGIN YANG SUDAH DISINKRONKAN ---
+  Future<void> login() async {
+    FocusScope.of(context).unfocus();
+
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Email dan password wajib diisi"),
+          backgroundColor: Colors.orange));
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      // Memanggil AuthService
+      var res = await AuthService()
+          .login(emailController.text, passwordController.text);
+
+      if (res["success"] == true) {
+        // CATATAN:
+        // Anda tidak perlu menulis kode simpan SharedPreferences lagi di sini,
+        // karena di file auth_service.dart yang Anda kirim tadi,
+        // fungsi login() sudah otomatis menyimpan "userName" dan "userEmail".
+
+        if (mounted) {
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (_) => const DashboardPage()));
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(res["message"] ?? "Email atau Password salah"),
+              backgroundColor: Colors.redAccent));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Koneksi gagal, silakan coba lagi"),
+            backgroundColor: Colors.redAccent));
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bgCanvas,
       body: Stack(
         children: [
-          // 1. Background Decoration (Soft Blobs)
           _buildBackgroundDecor(),
-
-          // 2. Main Content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnim,
@@ -270,7 +318,7 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildFooter() {
     return TextButton(
       onPressed: () => Navigator.push(
-          context, MaterialPageRoute(builder: (_) => RegisterPage())),
+          context, MaterialPageRoute(builder: (_) => const RegisterPage())),
       child: RichText(
         text: TextSpan(
           text: "Belum punya akun? ",
@@ -284,36 +332,5 @@ class _LoginPageState extends State<LoginPage>
         ),
       ),
     );
-  }
-
-  // LOGIC LOGIN
-  Future<void> login() async {
-    FocusScope.of(context).unfocus();
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) return;
-    setState(() => loading = true);
-
-    var res = await AuthService()
-        .login(emailController.text, passwordController.text);
-
-    if (res["success"] == true) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool("isLoggedIn", true);
-      if (mounted)
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const DashboardPage()));
-    } else {
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(res["message"]), backgroundColor: Colors.redAccent));
-    }
-    setState(() => loading = false);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
   }
 }

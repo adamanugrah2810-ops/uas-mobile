@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Tambahkan ini
 import '../services/auth_service.dart';
 import 'dashboard_page.dart';
 
@@ -15,11 +16,13 @@ class _RegisterPageState extends State<RegisterPage>
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController(); // Baru
 
   bool loading = false;
   bool obscurePass = true;
+  bool obscureConfirmPass = true; // Baru
 
-  // Palette Premium (Putih - Biru Luxury) sesuai LoginPage
   final Color bgCanvas = const Color(0xFFF8FAFD);
   final Color primaryBlue = const Color(0xFF0052D4);
   final Color accentBlue = const Color(0xFF4364F7);
@@ -51,45 +54,62 @@ class _RegisterPageState extends State<RegisterPage>
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    confirmPasswordController.dispose(); // Dispose controller baru
     super.dispose();
   }
 
   Future<void> register() async {
     FocusScope.of(context).unfocus();
 
+    // 1. Validasi Input Kosong
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
-        passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Semua field harus diisi."),
-          backgroundColor: Colors.orange,
-        ),
-      );
+        passwordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty) {
+      _showSnackBar("Semua field harus diisi.", Colors.orange);
+      return;
+    }
+
+    // 2. Validasi Kecocokan Password
+    if (passwordController.text != confirmPasswordController.text) {
+      _showSnackBar("Konfirmasi kata sandi tidak cocok!", Colors.redAccent);
       return;
     }
 
     setState(() => loading = true);
 
-    var res = await AuthService().register(
-        nameController.text, emailController.text, passwordController.text);
+    try {
+      var res = await AuthService().register(
+          nameController.text, emailController.text, passwordController.text);
 
-    if (res["success"] == true) {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
-        );
+      if (res["success"] == true) {
+        // 3. SIMPAN SESI & NAMA KE DATABASE
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool("isLoggedIn", true);
+        await prefs.setString(
+            "userName", nameController.text); // Simpan nama asli
+
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const DashboardPage()),
+          );
+        }
+      } else {
+        if (mounted) _showSnackBar(res["message"], Colors.redAccent);
       }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(res["message"]), backgroundColor: Colors.redAccent),
-        );
-      }
+    } catch (e) {
+      if (mounted)
+        _showSnackBar("Terjadi kesalahan koneksi.", Colors.redAccent);
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
-    setState(() => loading = false);
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: color),
+    );
   }
 
   @override
@@ -98,10 +118,7 @@ class _RegisterPageState extends State<RegisterPage>
       backgroundColor: bgCanvas,
       body: Stack(
         children: [
-          // 1. Background Decoration
           _buildBackgroundDecor(),
-
-          // 2. Main Content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnim,
@@ -112,11 +129,13 @@ class _RegisterPageState extends State<RegisterPage>
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Column(
                       children: [
+                        const SizedBox(height: 40),
                         _buildHeaderSection(),
                         const SizedBox(height: 30),
                         _buildInputCard(),
                         const SizedBox(height: 24),
                         _buildFooter(),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -124,8 +143,6 @@ class _RegisterPageState extends State<RegisterPage>
               ),
             ),
           ),
-
-          // Back Button
           Positioned(
             top: 40,
             left: 20,
@@ -167,11 +184,7 @@ class _RegisterPageState extends State<RegisterPage>
   Widget _buildHeaderSection() {
     return Column(
       children: [
-        Icon(
-          Icons.app_registration_rounded,
-          size: 80,
-          color: primaryBlue,
-        ),
+        Icon(Icons.app_registration_rounded, size: 70, color: primaryBlue),
         const SizedBox(height: 16),
         Text(
           "Buat Akun",
@@ -189,7 +202,7 @@ class _RegisterPageState extends State<RegisterPage>
 
   Widget _buildInputCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
@@ -208,21 +221,30 @@ class _RegisterPageState extends State<RegisterPage>
             label: "Nama Lengkap",
             icon: Icons.person_outline_rounded,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _buildTextField(
             controller: emailController,
             label: "Email",
             icon: Icons.mail_outline_rounded,
             keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _buildTextField(
             controller: passwordController,
             label: "Password",
-            icon: Icons.lock_open_rounded,
+            icon: Icons.lock_outline_rounded,
             isPassword: true,
+            isConfirmField: false,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: confirmPasswordController,
+            label: "Konfirmasi Password",
+            icon: Icons.lock_reset_rounded,
+            isPassword: true,
+            isConfirmField: true, // Untuk toggle mata yang terpisah
+          ),
+          const SizedBox(height: 24),
           _buildRegisterButton(),
         ],
       ),
@@ -234,32 +256,48 @@ class _RegisterPageState extends State<RegisterPage>
     required String label,
     required IconData icon,
     bool isPassword = false,
+    bool isConfirmField = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword ? obscurePass : false,
+      obscureText: isPassword
+          ? (isConfirmField ? obscureConfirmPass : obscurePass)
+          : false,
       keyboardType: keyboardType,
       style: TextStyle(color: textDark, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: textDark.withOpacity(0.3), fontSize: 14),
-        prefixIcon: Icon(icon, color: primaryBlue, size: 22),
+        labelStyle: TextStyle(color: textDark.withOpacity(0.3), fontSize: 13),
+        prefixIcon: Icon(icon, color: primaryBlue, size: 20),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
-                    obscurePass ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey),
-                onPressed: () => setState(() => obscurePass = !obscurePass),
+                    (isConfirmField ? obscureConfirmPass : obscurePass)
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: Colors.grey,
+                    size: 20),
+                onPressed: () {
+                  setState(() {
+                    if (isConfirmField) {
+                      obscureConfirmPass = !obscureConfirmPass;
+                    } else {
+                      obscurePass = !obscurePass;
+                    }
+                  });
+                },
               )
             : null,
         filled: true,
         fillColor: bgCanvas,
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           borderSide:
               BorderSide(color: primaryBlue.withOpacity(0.2), width: 1.5),
         ),
@@ -270,15 +308,15 @@ class _RegisterPageState extends State<RegisterPage>
   Widget _buildRegisterButton() {
     return Container(
       width: double.infinity,
-      height: 60,
+      height: 55,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         gradient: LinearGradient(colors: [primaryBlue, accentBlue]),
         boxShadow: [
           BoxShadow(
             color: primaryBlue.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -288,21 +326,21 @@ class _RegisterPageState extends State<RegisterPage>
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         child: loading
             ? const SizedBox(
-                height: 24,
-                width: 24,
+                height: 20,
+                width: 20,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5))
+                    color: Colors.white, strokeWidth: 2))
             : const Text(
                 "DAFTAR SEKARANG",
                 style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: 1.2),
+                    fontSize: 15,
+                    letterSpacing: 1),
               ),
       ),
     );
@@ -314,7 +352,7 @@ class _RegisterPageState extends State<RegisterPage>
       child: RichText(
         text: TextSpan(
           text: "Sudah punya akun? ",
-          style: TextStyle(color: textDark.withOpacity(0.5)),
+          style: TextStyle(color: textDark.withOpacity(0.5), fontSize: 14),
           children: [
             TextSpan(
               text: "Masuk",
