@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:ui'; // Wajib ada untuk efek blur (BackdropFilter)
+import 'dart:ui'; // Wajib untuk efek Glassmorphism
 
-// Pastikan file-file ini ada di project Anda
+// Pastikan file-file ini sudah Anda buat di folder project
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'laporan_page.dart';
@@ -17,7 +17,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Palette Warna Premium
+  // Palette Warna Premium (Konsisten dengan Login & Home)
   final Color _primaryBlue = const Color(0xFF0052D4);
   final Color _royalAzure = const Color(0xFF4364F7);
   final Color _lightSky = const Color(0xFF6FB1FC);
@@ -27,41 +27,50 @@ class _DashboardPageState extends State<DashboardPage> {
   String userName = "Memuat...";
   String userEmail = "Memuat...";
 
-  // List halaman utama
-  final List<Widget> _pages = [
-    HomePage(),
-    LaporanPage(),
-    PengaduanPage(),
-    const ProfilePage(),
-  ];
+  // List halaman utama sesuai urutan Bottom Nav
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    // Inisialisasi halaman
+    _pages = [
+      HomePage(),
+      LaporanPage(),
+      PengaduanPage(),
+      const ProfilePage(),
+    ];
     _loadUser();
   }
 
+  // Mengambil data user dari session (Shared Preferences)
   Future<void> _loadUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      userName = prefs.getString("userName") ?? "Adam Anugrah";
-      userEmail = prefs.getString("userEmail") ?? "adamanugrah1012@gmail.com";
+      // Key harus sama dengan yang ada di AuthService
+      userName = prefs.getString("userName") ?? "User";
+      userEmail = prefs.getString("userEmail") ?? "Email tidak tersedia";
     });
   }
 
+  // Fungsi Logout
   void logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.clear(); // Hapus semua sesi
     if (!mounted) return;
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (_) => LoginPage()));
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) =>
+          false, // Hapus semua history navigasi agar tidak bisa "back" ke dashboard
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgColor,
-      extendBody: true, // Membuat konten mengalir di belakang navbar
+      extendBody: true, // Membuat konten scrolling di belakang navbar floating
       appBar: _buildPremiumAppBar(context),
       drawer: _buildModernDrawer(),
       body: PageTransitionSwitcher(
@@ -71,15 +80,20 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // --- APP BAR MINIMALIS & MEWAH ---
+  // --- APP BAR MINIMALIS ---
   PreferredSizeWidget _buildPremiumAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white.withOpacity(0.8),
       elevation: 0,
       centerTitle: true,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(color: Colors.transparent),
+        ),
+      ),
       leading: Builder(
         builder: (context) => IconButton(
-          // Menggunakan icon notes agar tidak error merah
           icon: Icon(Icons.notes_rounded, color: _primaryBlue, size: 28),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
@@ -105,16 +119,9 @@ class _DashboardPageState extends State<DashboardPage> {
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 15),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
-            ],
-          ),
           child: IconButton(
             icon: Icon(Icons.notifications_none_rounded,
-                color: _primaryBlue, size: 24),
+                color: _primaryBlue, size: 26),
             onPressed: () {},
           ),
         ),
@@ -127,22 +134,26 @@ class _DashboardPageState extends State<DashboardPage> {
     return Container(
       height: 75,
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: _primaryBlue.withOpacity(0.15),
+            blurRadius: 25,
+            offset: const Offset(0, 10),
+          )
+        ],
+      ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withOpacity(0.85),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(color: Colors.white.withOpacity(0.5)),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryBlue.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                )
-              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -179,14 +190,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ? _primaryBlue.withOpacity(0.1)
                   : Colors.transparent,
               shape: BoxShape.circle,
-              boxShadow: isSpecial
-                  ? [
-                      BoxShadow(
-                          color: _primaryBlue.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4))
-                    ]
-                  : [],
             ),
             child: Icon(
               icon,
@@ -213,7 +216,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildModernDrawer() {
     return Drawer(
       backgroundColor: Colors.white,
-      elevation: 0,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
             topRight: Radius.circular(40), bottomRight: Radius.circular(40)),
@@ -233,7 +235,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     Icons.manage_accounts_outlined, "Pengaturan Akun", 3),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Divider(color: Colors.black12, thickness: 1),
+                  child: Divider(color: Colors.black12),
                 ),
                 _buildLogoutAction(),
               ],
@@ -252,23 +254,17 @@ class _DashboardPageState extends State<DashboardPage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(25, 60, 25, 40),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_primaryBlue, _royalAzure],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: LinearGradient(colors: [_primaryBlue, _royalAzure]),
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(50)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
-            child: const CircleAvatar(
-              radius: 38,
-              backgroundColor: Color(0xFFE2E8F0),
+          const CircleAvatar(
+            radius: 38,
+            backgroundColor: Colors.white,
+            child: CircleAvatar(
+              radius: 35,
               backgroundImage: AssetImage('assets/images/logo_banten.jpg'),
             ),
           ),
@@ -276,12 +272,12 @@ class _DashboardPageState extends State<DashboardPage> {
           Text(userName,
               style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
           Text(userEmail,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.8), fontSize: 13)),
+                  color: Colors.white.withOpacity(0.8), fontSize: 12)),
         ],
       ),
     );
@@ -289,55 +285,30 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _drawerMenu(IconData icon, String title, int index) {
     bool isSelected = _selectedIndex == index;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: isSelected ? _primaryBlue.withOpacity(0.08) : Colors.transparent,
-      ),
-      child: ListTile(
-        leading: Icon(icon,
-            color: isSelected ? _primaryBlue : Colors.grey[600], size: 22),
-        title: Text(title,
-            style: TextStyle(
-                color: isSelected ? _primaryBlue : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 14)),
-        onTap: () {
-          setState(() => _selectedIndex = index);
-          Navigator.pop(context);
-        },
-      ),
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? _primaryBlue : Colors.grey[600]),
+      title: Text(title,
+          style: TextStyle(
+              color: isSelected ? _primaryBlue : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      onTap: () {
+        setState(() => _selectedIndex = index);
+        Navigator.pop(context);
+      },
     );
   }
 
   Widget _buildLogoutAction() {
-    return InkWell(
+    return ListTile(
+      leading: const Icon(Icons.logout_rounded, color: Colors.red),
+      title: const Text("Keluar Aplikasi",
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
       onTap: logout,
-      borderRadius: BorderRadius.circular(15),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.logout_rounded, color: Colors.red, size: 22),
-            SizedBox(width: 15),
-            Text("Keluar Aplikasi",
-                style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14)),
-          ],
-        ),
-      ),
     );
   }
 }
 
-// Widget untuk transisi halus antar halaman
+// Efek transisi antar halaman
 class PageTransitionSwitcher extends StatelessWidget {
   final Widget child;
   const PageTransitionSwitcher({required this.child, super.key});
@@ -345,15 +316,13 @@ class PageTransitionSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      switchInCurve: Curves.easeOutQuart,
-      switchOutCurve: Curves.easeInQuart,
+      duration: const Duration(milliseconds: 400),
       transitionBuilder: (Widget child, Animation<double> animation) {
         return FadeTransition(
           opacity: animation,
           child: SlideTransition(
             position:
-                Tween<Offset>(begin: const Offset(0.02, 0), end: Offset.zero)
+                Tween<Offset>(begin: const Offset(0.01, 0), end: Offset.zero)
                     .animate(animation),
             child: child,
           ),
