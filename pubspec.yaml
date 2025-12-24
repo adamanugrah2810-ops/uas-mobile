@@ -12,6 +12,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # --- MAP & LOCATION ---
+  google_maps_flutter: ^2.5.3
+  geolocator: ^10.1.0
+
   # --- DATA & STORAGE ---
   http: ^1.2.0
   shared_preferences: ^2.3.2
@@ -22,8 +26,8 @@ dependencies:
 
   # --- UI & UX ENHANCEMENT ---
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1 # Menambah kesan mewah dengan font modern
-  animations: ^2.0.1 # Efek transisi halaman yang smooth
+  google_fonts: ^6.2.1
+  animations: ^2.0.1
 
   # --- MEDIA & FILES ---
   image_picker: ^1.1.2
@@ -31,23 +35,21 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.13.1
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon.png"
+  image_path: assets/icon/app_icon.png
   min_sdk_android: 21
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  adaptive_icon_foreground: assets/icon/app_icon.png
 
 flutter:
   uses-material-design: true
 
-  # --- ASSETS MANAGEMENT ---
   assets:
     - assets/images/logo_banten.jpg
-
-  # Pastikan file logo_banten.jpg benar-benar ada di folder:
-  # project_folder/assets/images/logo_banten.jpg
+    - assets/icon/app_icon.png
