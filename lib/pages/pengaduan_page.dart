@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // Import Maps
-import 'package:geolocator/geolocator.dart'; // Import GPS
+import 'package:geolocator/geolocator.dart';
+import 'package:mobile_auth/services/pengaduan.service.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import GPS
 
 class PengaduanPage extends StatefulWidget {
   const PengaduanPage({super.key});
@@ -498,38 +500,71 @@ class _PengaduanPageState extends State<PengaduanPage>
   }
 
   Widget _buildSubmitButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 65,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient:
-            LinearGradient(colors: [_primaryBlue, const Color(0xFF4364F7)]),
-        boxShadow: [
-          BoxShadow(
-              color: _primaryBlue.withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 10))
-        ],
-      ),
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            _showSnackBar("Laporan Berhasil Terkirim!");
+        onPressed: () async {
+          if (!_formKey.currentState!.validate()) return;
+
+          if (selectedCategory == null) {
+            _showSnackBar("Kategori belum dipilih");
+            return;
           }
+
+          if (_markers.isEmpty) {
+            _showSnackBar("Lokasi belum ditentukan");
+            return;
+          }
+
+          final prefs = await SharedPreferences.getInstance();
+          final token = prefs.getString("token");
+
+          if (token == null) {
+            _showSnackBar("Sesi login habis");
+            return;
+          }
+
+          final result = await PengaduanService.kirimPengaduan(
+            token: token,
+            judul: judulController.text,
+            deskripsi: isiController.text,
+            kategori: selectedCategory!,
+            wilayah: "DKI Jakarta",
+            kecamatan: "Tanah Abang",
+            desa: "Kebon Kacang",
+            latitude: _markers.first.position.latitude.toString(),
+            longitude: _markers.first.position.longitude.toString(),
+            foto: selectedImages.isNotEmpty ? selectedImages.first : null,
+          );
+
+          _showSnackBar(result['message']);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
         ),
-        child: const Text("KIRIM LAPORAN SEKARANG",
-            style: TextStyle(
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primaryBlue, const Color(0xFF4364F7)],
+            ),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: const Center(
+            child: Text(
+              "KIRIM LAPORAN SEKARANG",
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
-                letterSpacing: 1)),
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
