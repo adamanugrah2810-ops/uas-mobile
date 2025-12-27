@@ -5,7 +5,7 @@ import 'dart:ui'; // Wajib untuk efek Glassmorphism
 // Pastikan file-file ini sudah Anda buat di folder project
 import 'home_page.dart';
 import 'profile_page.dart';
-import 'laporan_page.dart';
+import 'laporan/laporan_page.dart';
 import 'pengaduan_page.dart';
 import 'login_page.dart';
 

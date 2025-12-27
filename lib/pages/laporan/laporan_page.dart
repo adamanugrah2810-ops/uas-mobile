@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_auth/models/pengaduan.model.dart';
+import 'package:mobile_auth/pages/laporan/laporan_detail_page.dart';
+import 'package:mobile_auth/services/pengaduan.service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LaporanPage extends StatefulWidget {
   const LaporanPage({super.key});
@@ -15,37 +19,179 @@ class _LaporanPageState extends State<LaporanPage> {
   final Color _textDark = const Color(0xFF1E293B);
   final Color _textGrey = const Color(0xFF64748B);
 
+  bool _isLoading = true;
+  String? _error;
+  List<Pengaduan> _reports = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPengaduan();
+  }
+
+  Future<void> _fetchPengaduan() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Token tidak ditemukan');
+      }
+
+      final data = await PengaduanService.getPengaduanSaya(token: token);
+
+      setState(() {
+        _reports = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  double _progress(String status) {
+    switch (status) {
+      case 'diajukan':
+        return 0.25;
+      case 'diproses':
+        return 0.6;
+      case 'selesai':
+        return 1.0;
+      case 'ditolak':
+        return 0.0;
+      default:
+        return 0.0;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'diajukan':
+        return Colors.orange;
+      case 'diproses':
+        return Colors.blue;
+      case 'selesai':
+        return Colors.green;
+      case 'ditolak':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildPremiumReportList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    if (_reports.isEmpty) {
+      return const Center(
+        child: Text("Belum ada pengaduan"),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _reports.length,
+      itemBuilder: (context, index) {
+        final report = _reports[index];
+        final color = _statusColor(report.status);
+        final progress = _progress(report.status);
+
+        return GestureDetector(
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LaporanDetailPage(pengaduan: report),
+              ),
+            );
+
+            if (result == true) {
+              _fetchPengaduan(); // refresh setelah delete
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 6),
+                )
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    report.judul,
+                    style: TextStyle(
+                      color: _textDark,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "${report.kategori} • ${report.createdAt}",
+                    style: TextStyle(color: _textGrey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        report.status.toUpperCase(),
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "${(progress * 100).toInt()}%",
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: _bgLight,
+                    color: color,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // Data Mock yang lebih banyak
-  final List<Map<String, dynamic>> _reports = [
-    {
-      "title": "Perbaikan Jembatan",
-      "progress": 0.7,
-      "color": const Color(0xFF0052D4),
-      "category": "Infrastruktur",
-      "date": "22 Des 2025"
-    },
-    {
-      "title": "Pohon Tumbang",
-      "progress": 0.3,
-      "color": Colors.orange,
-      "category": "Keamanan",
-      "date": "21 Des 2025"
-    },
-    {
-      "title": "Izin Usaha Mikro",
-      "progress": 1.0,
-      "color": Colors.green,
-      "category": "Layanan",
-      "date": "20 Des 2025"
-    },
-    {
-      "title": "Lampu Jalan Mati",
-      "progress": 0.5,
-      "color": Colors.orange,
-      "category": "Infrastruktur",
-      "date": "19 Des 2025"
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -346,104 +492,6 @@ class _LaporanPageState extends State<LaporanPage> {
                 fontSize: 12,
                 fontWeight: FontWeight.bold)),
       ],
-    );
-  }
-
-  // --- REPORT LIST ---
-  Widget _buildPremiumReportList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _reports.length,
-      itemBuilder: (context, index) {
-        return _buildModernReportCard(index);
-      },
-    );
-  }
-
-  Widget _buildModernReportCard(int index) {
-    final report = _reports[index];
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 15,
-              offset: const Offset(0, 8))
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {},
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                            color: report['color'].withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(18)),
-                        child: Icon(Icons.description_outlined,
-                            color: report['color']),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(report['title'],
-                                style: TextStyle(
-                                    color: _textDark,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16)),
-                            Text("${report['category']} • ${report['date']}",
-                                style:
-                                    TextStyle(color: _textGrey, fontSize: 11)),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios_rounded,
-                          size: 14, color: Colors.black26),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Status Progres",
-                          style: TextStyle(color: _textGrey, fontSize: 12)),
-                      Text("${(report['progress'] * 100).toInt()}%",
-                          style: TextStyle(
-                              color: report['color'],
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: report['progress'],
-                      minHeight: 8,
-                      backgroundColor: _bgLight,
-                      color: report['color'],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
