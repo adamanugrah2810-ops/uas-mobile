@@ -1,10 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Import Maps
-import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_auth/services/pengaduan.service.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import GPS
 
 class PengaduanPage extends StatefulWidget {
   const PengaduanPage({super.key});
@@ -16,25 +14,43 @@ class PengaduanPage extends StatefulWidget {
 class _PengaduanPageState extends State<PengaduanPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController judulController = TextEditingController();
   final TextEditingController isiController = TextEditingController();
-  final TextEditingController alamatController = TextEditingController();
 
   String? selectedCategory;
+
+  // === WILAYAH BANTEN ===
+  final String selectedProvinsi = "Banten";
+  String? selectedKota;
+  String? selectedKecamatan;
+  String? selectedKelurahan;
+
+  // === DATA STATIC BANTEN (CONTOH) ===
+  final Map<String, Map<String, List<String>>> wilayahBanten = {
+    "Kota Serang": {
+      "Serang": ["Cipocok Jaya", "Kasemen", "Curug"]
+    },
+    "Kab. Tangerang": {
+      "Balaraja": ["Saga", "Sentul"],
+      "Cikupa": ["Sukamulya", "Talaga"]
+    },
+    "Kota Tangerang": {
+      "Ciledug": ["Paninggilan", "Sudimara Barat"]
+    }
+  };
+
+  List<String> kotaList = [];
+  List<String> kecamatanList = [];
+  List<String> kelurahanList = [];
+
   List<File> selectedImages = [];
 
-  // Variabel untuk Google Maps
-  GoogleMapController? mapController;
-  LatLng _initialLocation =
-      const LatLng(-6.200000, 106.816666); // Default Jakarta
-  Set<Marker> _markers = {};
-  bool _isLoadingLocation = false;
-
-  // Palette Warna Mewah
+  // === UI ===
   final Color _primaryBlue = const Color(0xFF0052D4);
   final Color _bgCanvas = const Color(0xFFF1F5F9);
-  final Color _softGrey = const Color(0xFF94A3B8);
   final Color _darkSlate = const Color(0xFF0F172A);
+  final Color _softGrey = const Color(0xFF94A3B8);
 
   final List<String> _categories = [
     "Infrastruktur & Jalan",
@@ -42,9 +58,7 @@ class _PengaduanPageState extends State<PengaduanPage>
     "Kesehatan Masyarakat",
     "Kebersihan & Sampah",
     "Lingkungan Hidup",
-    "Layanan Perizinan",
     "Fasilitas Publik",
-    "Gangguan Listrik/Air",
     "Lain-lain"
   ];
 
@@ -54,14 +68,12 @@ class _PengaduanPageState extends State<PengaduanPage>
   @override
   void initState() {
     super.initState();
+    kotaList = wilayahBanten.keys.toList();
+
     _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeIn,
-    );
+        vsync: this, duration: const Duration(milliseconds: 800));
+    _fadeAnimation =
+        CurvedAnimation(parent: _animController, curve: Curves.easeIn);
     _animController.forward();
   }
 
@@ -70,74 +82,19 @@ class _PengaduanPageState extends State<PengaduanPage>
     _animController.dispose();
     judulController.dispose();
     isiController.dispose();
-    alamatController.dispose();
     super.dispose();
-  }
-
-  // FUNGSI DETEKSI LOKASI (GPS)
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isLoadingLocation = true);
-
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Cek apakah layanan GPS aktif
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() => _isLoadingLocation = false);
-      _showSnackBar("Layanan lokasi tidak aktif.");
-      return;
-    }
-
-    // Cek izin lokasi
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        setState(() => _isLoadingLocation = false);
-        _showSnackBar("Izin lokasi ditolak.");
-        return;
-      }
-    }
-
-    // Ambil koordinat
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-
-    LatLng currentLatLng = LatLng(position.latitude, position.longitude);
-
-    setState(() {
-      _markers = {
-        Marker(
-          markerId: const MarkerId("user_loc"),
-          position: currentLatLng,
-          infoWindow: const InfoWindow(title: "Lokasi Laporan"),
-        )
-      };
-      _isLoadingLocation = false;
-      alamatController.text = "${position.latitude}, ${position.longitude}";
-    });
-
-    // Animasikan Kamera Peta ke Lokasi Baru
-    mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: currentLatLng, zoom: 16),
-      ),
-    );
-  }
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-    if (file != null && selectedImages.length < 3) {
-      setState(() => selectedImages.add(File(file.path)));
-    } else if (selectedImages.length >= 3) {
-      _showSnackBar("Maksimal 3 foto pendukung");
-    }
   }
 
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+    if (file != null && selectedImages.length < 3) {
+      setState(() => selectedImages.add(File(file.path)));
+    }
   }
 
   @override
@@ -145,355 +102,219 @@ class _PengaduanPageState extends State<PengaduanPage>
     return Scaffold(
       backgroundColor: _bgCanvas,
       body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
         slivers: [
-          _buildSliverAppBar(),
+          _buildAppBar(),
           SliverToBoxAdapter(
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(20),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 20),
-                      _buildInfoBanner(),
-                      const SizedBox(height: 30),
-                      _buildSectionHeader(
-                          "INFORMASI UTAMA", Icons.assignment_outlined),
-                      _buildPremiumCard(
-                        child: Column(
+                      _buildSection("INFORMASI UTAMA"),
+                      _buildCard(
+                        Column(
                           children: [
-                            _buildModernField(
-                              label: "Judul Laporan",
-                              controller: judulController,
-                              hint: "Misal: Lampu jalan mati",
-                              icon: Icons.title_rounded,
+                            _buildField(
+                              "Judul Laporan",
+                              judulController,
+                              "Contoh: Jalan rusak",
                               validator: (v) =>
                                   v!.isEmpty ? "Judul wajib diisi" : null,
                             ),
-                            const SizedBox(height: 25),
-                            _buildModernDropdown(),
-                            const SizedBox(height: 25),
-                            _buildModernField(
-                              label: "Deskripsi Kejadian",
-                              controller: isiController,
-                              hint: "Detail kejadian...",
-                              icon: Icons.subject_rounded,
-                              maxLines: 5,
+                            const SizedBox(height: 20),
+                            _buildCategory(),
+                            const SizedBox(height: 20),
+                            _buildField(
+                              "Deskripsi",
+                              isiController,
+                              "Detail kejadian...",
+                              maxLines: 4,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 35),
-                      _buildSectionHeader("LOKASI KEJADIAN", Icons.map_rounded),
-                      _buildPremiumCard(
-                        child: Column(
+                      const SizedBox(height: 30),
+                      _buildSection("LOKASI KEJADIAN"),
+                      _buildCard(
+                        Column(
                           children: [
-                            _buildMapPreview(), // Peta Interaktif
+                            _buildStaticField("Provinsi", selectedProvinsi),
                             const SizedBox(height: 20),
-                            _buildLocationButton(),
+                            _buildSelect(
+                              "Kota / Kabupaten",
+                              selectedKota,
+                              kotaList,
+                              (v) {
+                                setState(() {
+                                  selectedKota = v;
+                                  selectedKecamatan = null;
+                                  selectedKelurahan = null;
+                                  kecamatanList =
+                                      wilayahBanten[v!]!.keys.toList();
+                                  kelurahanList = [];
+                                });
+                              },
+                            ),
                             const SizedBox(height: 20),
-                            _buildModernField(
-                              label: "Alamat / Koordinat",
-                              controller: alamatController,
-                              hint: "Klik tombol di atas untuk isi otomatis",
-                              icon: Icons.pin_drop_rounded,
+                            _buildSelect(
+                              "Kecamatan",
+                              selectedKecamatan,
+                              kecamatanList,
+                              (v) {
+                                setState(() {
+                                  selectedKecamatan = v;
+                                  selectedKelurahan = null;
+                                  kelurahanList =
+                                      wilayahBanten[selectedKota!]![v!]!;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            _buildSelect(
+                              "Kelurahan",
+                              selectedKelurahan,
+                              kelurahanList,
+                              (v) => setState(() => selectedKelurahan = v),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 35),
-                      _buildSectionHeader(
-                          "DOKUMENTASI FOTO", Icons.camera_enhance_outlined),
-                      _buildPremiumCard(child: _buildImagePickerGrid()),
+                      const SizedBox(height: 30),
+                      _buildSection("DOKUMENTASI"),
+                      _buildCard(_buildImages()),
                       const SizedBox(height: 40),
                       _buildSubmitButton(),
-                      const SizedBox(height: 140),
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
               ),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  // --- SUB-WIDGETS ---
+  // ================= WIDGET =================
 
-  Widget _buildSliverAppBar() {
+  Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 120.0,
       pinned: true,
-      elevation: 0,
       backgroundColor: Colors.white,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_new_rounded,
-            color: _primaryBlue, size: 20),
-        onPressed: () => Navigator.pop(context),
-      ),
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: true,
-        title: Text("Buat Laporan Baru",
-            style: TextStyle(
-                color: _darkSlate, fontWeight: FontWeight.w900, fontSize: 18)),
-      ),
+      title: const Text("Buat Laporan",
+          style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildMapPreview() {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _primaryBlue.withOpacity(0.1)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: GoogleMap(
-          initialCameraPosition:
-              CameraPosition(target: _initialLocation, zoom: 14),
-          onMapCreated: (controller) => mapController = controller,
-          markers: _markers,
-          myLocationEnabled: true,
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationButton() {
-    return InkWell(
-      onTap: _isLoadingLocation ? null : _getCurrentLocation,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 55,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: _primaryBlue.withOpacity(0.3)),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _isLoadingLocation
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : Icon(Icons.gps_fixed_rounded, color: _primaryBlue, size: 18),
-            const SizedBox(width: 12),
-            Text(
-              _isLoadingLocation ? "Mendeteksi..." : "Deteksi Lokasi Otomatis",
-              style: TextStyle(
-                  color: _primaryBlue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoBanner() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            colors: [_primaryBlue.withOpacity(0.1), Colors.white]),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _primaryBlue.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.verified_user_rounded, color: _primaryBlue, size: 24),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              "Laporan Anda aman dan rahasia.",
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSection(String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 15),
-      child: Row(
-        children: [
-          Icon(icon, color: _primaryBlue, size: 18),
-          const SizedBox(width: 10),
-          Text(title,
-              style: TextStyle(
-                  color: _darkSlate,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1.2)),
-        ],
-      ),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(title,
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+              color: _darkSlate)),
     );
   }
 
-  Widget _buildPremiumCard({required Widget child}) {
+  Widget _buildCard(Widget child) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 24,
-              offset: const Offset(0, 12))
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 20,
+              offset: const Offset(0, 10))
         ],
       ),
       child: child,
     );
   }
 
-  Widget _buildModernField(
-      {required String label,
-      required TextEditingController controller,
-      required String hint,
-      required IconData icon,
-      int maxLines = 1,
-      String? Function(String?)? validator}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                color: _darkSlate, fontWeight: FontWeight.bold, fontSize: 13)),
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          validator: validator,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, color: _primaryBlue, size: 20),
-            filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none),
-          ),
-        ),
-      ],
+  Widget _buildField(String label, TextEditingController c, String hint,
+      {int maxLines = 1, String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: c,
+      maxLines: maxLines,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none),
+      ),
     );
   }
 
-  Widget _buildModernDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Kategori Laporan",
-            style: TextStyle(
-                color: _darkSlate, fontWeight: FontWeight.bold, fontSize: 13)),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-          decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(18)),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: selectedCategory,
-              icon:
-                  Icon(Icons.keyboard_arrow_down_rounded, color: _primaryBlue),
-              hint: const Text("Pilih Kategori"),
-              items: _categories
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (v) => setState(() => selectedCategory = v),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildStaticField(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text("$label : $value",
+          style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
-  Widget _buildImagePickerGrid() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSelect(String label, String? value, List<String> items,
+      Function(String?) onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none),
+      ),
+      items:
+          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildCategory() {
+    return DropdownButtonFormField<String>(
+      value: selectedCategory,
+      hint: const Text("Pilih Kategori"),
+      items: _categories
+          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+          .toList(),
+      onChanged: (v) => setState(() => selectedCategory = v),
+      validator: (v) => v == null ? "Kategori wajib dipilih" : null,
+    );
+  }
+
+  Widget _buildImages() {
+    return Row(
       children: [
-        Text("Lampirkan foto bukti (Maks. 3)",
-            style: TextStyle(color: _softGrey, fontSize: 13)),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                width: 85,
-                height: 85,
-                decoration: BoxDecoration(
-                  color: _primaryBlue.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: _primaryBlue.withOpacity(0.2), width: 1.5),
-                ),
-                child: Icon(Icons.add_photo_alternate_outlined,
-                    color: _primaryBlue, size: 28),
-              ),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: _primaryBlue.withOpacity(0.1),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: SizedBox(
-                height: 85,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: selectedImages.length,
-                  itemBuilder: (context, index) {
-                    return Stack(
-                      children: [
-                        Container(
-                          width: 85,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            image: DecorationImage(
-                                image: FileImage(selectedImages[index]),
-                                fit: BoxFit.cover),
-                          ),
-                        ),
-                        Positioned(
-                          top: 5,
-                          right: 17,
-                          child: GestureDetector(
-                            onTap: () =>
-                                setState(() => selectedImages.removeAt(index)),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                  color: Colors.red, shape: BoxShape.circle),
-                              child: const Icon(Icons.close,
-                                  color: Colors.white, size: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+            child: Icon(Icons.add_a_photo, color: _primaryBlue),
+          ),
         ),
       ],
     );
@@ -502,69 +323,37 @@ class _PengaduanPageState extends State<PengaduanPage>
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
-      height: 65,
+      height: 55,
       child: ElevatedButton(
         onPressed: () async {
           if (!_formKey.currentState!.validate()) return;
 
-          if (selectedCategory == null) {
-            _showSnackBar("Kategori belum dipilih");
-            return;
-          }
-
-          if (_markers.isEmpty) {
-            _showSnackBar("Lokasi belum ditentukan");
+          if (selectedKota == null ||
+              selectedKecamatan == null ||
+              selectedKelurahan == null) {
+            _showSnackBar("Lengkapi lokasi");
             return;
           }
 
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString("token");
+          if (token == null) return;
 
-          if (token == null) {
-            _showSnackBar("Sesi login habis");
-            return;
-          }
-
-          final result = await PengaduanService.kirimPengaduan(
+          final res = await PengaduanService.kirimPengaduan(
             token: token,
             judul: judulController.text,
             deskripsi: isiController.text,
             kategori: selectedCategory!,
-            wilayah: "DKI Jakarta",
-            kecamatan: "Tanah Abang",
-            desa: "Kebon Kacang",
-            latitude: _markers.first.position.latitude.toString(),
-            longitude: _markers.first.position.longitude.toString(),
+            provinsi: selectedProvinsi,
+            kota: selectedKota!,
+            kecamatan: selectedKecamatan!,
+            kelurahan: selectedKelurahan!,
             foto: selectedImages.isNotEmpty ? selectedImages.first : null,
           );
 
-          _showSnackBar(result['message']);
+          _showSnackBar(res['message']);
         },
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-        ),
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [_primaryBlue, const Color(0xFF4364F7)],
-            ),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: const Center(
-            child: Text(
-              "KIRIM LAPORAN SEKARANG",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-        ),
+        child: const Text("KIRIM LAPORAN"),
       ),
     );
   }
