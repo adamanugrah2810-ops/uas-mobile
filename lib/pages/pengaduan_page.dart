@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_auth/services/pengaduan.service.dart';
+// Pastikan import home_page kamu benar di sini:
+import 'package:mobile_auth/pages/home_page.dart';
 
 class PengaduanPage extends StatefulWidget {
   const PengaduanPage({super.key});
@@ -27,13 +30,27 @@ class _PengaduanPageState extends State<PengaduanPage>
   final Map<String, Map<String, List<String>>> wilayahBanten = {
     "Kab. Tangerang": {
       "Balaraja": ["Saga", "Sentul"],
-      "Cikupa": ["Sukamulya", "Talaga"]
+      "Cikupa": ["Sukamulya", "Talaga"],
+      "Cibodas": ["Cibodas Baru", "Cibodas Megah", "Panunggangan Barat"]
     },
     "Kota Tangerang": {
       "Ciledug": ["Paninggilan", "Sudimara Barat"]
     },
     "Kota Serang": {
       "Serang": ["Cipocok Jaya", "Kasemen", "Curug"]
+    },
+    "Kota Tangerang Selatan": {
+      "Pamulang": [
+        "Pamulang",
+        "Benda Baru",
+        "Pondok Benda",
+        "Bambu Apus",
+        "Kedaung",
+        "Pamulang Barat",
+        "Pamulang Timur",
+        "Pondok Cabe Udik",
+        "Pondok Cabe Ilir"
+      ]
     }
   };
 
@@ -62,9 +79,9 @@ class _PengaduanPageState extends State<PengaduanPage>
     super.initState();
     kotaList = wilayahBanten.keys.toList();
     _animController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 800));
     _fadeAnimation =
-        CurvedAnimation(parent: _animController, curve: Curves.easeIn);
+        CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
     _animController.forward();
   }
 
@@ -76,51 +93,86 @@ class _PengaduanPageState extends State<PengaduanPage>
     super.dispose();
   }
 
-  // MODAL BERHASIL YANG KEREN
   void _showSuccessDialog() {
-    showDialog(
+    HapticFeedback.vibrate();
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 80, color: Colors.green),
-                const SizedBox(height: 16),
-                const Text(
-                  "Laporan Terkirim!",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Terima kasih atas laporan Anda. Kami akan segera menindaklanjutinya.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 500),
+      pageBuilder: (context, anim1, anim2) => Container(),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return Transform.scale(
+          scale: Curves.easeInOutBack.transform(anim1.value),
+          child: Opacity(
+            opacity: anim1.value,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28)),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE3F2FD),
+                      shape: BoxShape.circle,
                     ),
-                    onPressed: () {
-                      Navigator.pop(context); // Tutup dialog
-                      Navigator.pop(context); // Kembali ke dashboard
-                    },
-                    child: const Text("Selesai",
-                        style: TextStyle(color: Colors.white)),
+                    child: const Icon(Icons.check_rounded,
+                        size: 60, color: Color(0xFF2196F3)),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  const Text("Laporan Terkirim",
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1565C0))),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Terima kasih. Laporan Anda telah kami terima dan akan segera ditindaklanjuti.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.blueGrey, height: 1.5, fontSize: 14),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: const LinearGradient(
+                            colors: [Color(0xFF2196F3), Color(0xFF64B5F6)]),
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                        ),
+                        onPressed: () {
+                          // PERBAIKAN UTAMA:
+                          // Menghapus semua tumpukan navigasi dan kembali ke Home
+                          // Ini mencegah error !history.isNotEmpty
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                            (route) => false,
+                          );
+                        },
+                        child: const Text("SELESAI",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 16)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -130,10 +182,255 @@ class _PengaduanPageState extends State<PengaduanPage>
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? file =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (file != null) {
       setState(() => selectedImages = [File(file.path)]);
     }
+  }
+
+  InputDecoration _mewahInput(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFF1976D2), fontSize: 14),
+      prefixIcon: Icon(icon, color: const Color(0xFF2196F3), size: 22),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFFBBDEFB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0F7FF),
+      appBar: AppBar(
+        title: const Text("Buat Pengaduan",
+            style: TextStyle(
+                fontWeight: FontWeight.w800, color: Color(0xFF0D47A1))),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    _sectionHeader("Detail Laporan"),
+                    _buildFormCard([
+                      TextFormField(
+                        controller: judulController,
+                        decoration:
+                            _mewahInput("Judul Laporan", Icons.campaign),
+                        validator: (v) => v!.isEmpty ? "Wajib diisi" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        decoration: _mewahInput("Kategori", Icons.category),
+                        items: _categories
+                            .map((e) =>
+                                DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (v) => setState(() => selectedCategory = v),
+                        validator: (v) => v == null ? "Pilih kategori" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: isiController,
+                        maxLines: 4,
+                        decoration: _mewahInput("Deskripsi", Icons.description),
+                        validator: (v) => v!.isEmpty ? "Wajib diisi" : null,
+                      ),
+                    ]),
+                    const SizedBox(height: 24),
+                    _sectionHeader("Lokasi"),
+                    _buildFormCard([
+                      DropdownButtonFormField(
+                        decoration:
+                            _mewahInput("Kota/Kabupaten", Icons.location_city),
+                        value: selectedKota,
+                        items: kotaList
+                            .map((e) =>
+                                DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            selectedKota = v;
+                            kecamatanList = wilayahBanten[v!]!.keys.toList();
+                            selectedKecamatan = null;
+                            selectedKelurahan = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField(
+                              decoration: _mewahInput("Kecamatan", Icons.map),
+                              value: selectedKecamatan,
+                              items: kecamatanList
+                                  .map((e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e,
+                                          style:
+                                              const TextStyle(fontSize: 12))))
+                                  .toList(),
+                              onChanged: (v) {
+                                setState(() {
+                                  selectedKecamatan = v;
+                                  kelurahanList =
+                                      wilayahBanten[selectedKota!]![v!]!;
+                                  selectedKelurahan = null;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: DropdownButtonFormField(
+                              decoration:
+                                  _mewahInput("Kelurahan", Icons.pin_drop),
+                              value: selectedKelurahan,
+                              items: kelurahanList
+                                  .map((e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e,
+                                          style:
+                                              const TextStyle(fontSize: 12))))
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => selectedKelurahan = v),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ]),
+                    const SizedBox(height: 24),
+                    _sectionHeader("Bukti Foto"),
+                    _buildImageUploader(),
+                    const SizedBox(height: 32),
+                    _buildSubmitButton(),
+                    const SizedBox(height: 120),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.white.withOpacity(0.8),
+                child: const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF2196F3)),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(title.toUpperCase(),
+          style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1976D2),
+              letterSpacing: 1.1)),
+    );
+  }
+
+  Widget _buildFormCard(List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFF2196F3).withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildImageUploader() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 160,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFBBDEFB), width: 2),
+        ),
+        child: selectedImages.isEmpty
+            ? const Center(
+                child: Icon(Icons.add_a_photo_rounded,
+                    size: 40, color: Color(0xFF2196F3)))
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.file(selectedImages.first, fit: BoxFit.cover),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+            colors: [Color(0xFF0D47A1), Color(0xFF2196F3)]),
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFF2196F3).withOpacity(0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 8)),
+        ],
+      ),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        onPressed: _isLoading ? null : _submitPengaduan,
+        child: const Text("KIRIM LAPORAN",
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white)),
+      ),
+    );
   }
 
   Future<void> _submitPengaduan() async {
@@ -141,18 +438,15 @@ class _PengaduanPageState extends State<PengaduanPage>
     if (selectedKota == null ||
         selectedKecamatan == null ||
         selectedKelurahan == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Lengkapi lokasi kejadian")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Lengkapi lokasi")));
       return;
     }
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("token");
-    if (token == null || token.isEmpty) return;
-
     setState(() => _isLoading = true);
-
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+      if (token == null) throw Exception("Token null");
       final res = await PengaduanService.kirimPengaduan(
         token: token,
         judul: judulController.text.trim(),
@@ -164,196 +458,17 @@ class _PengaduanPageState extends State<PengaduanPage>
         kelurahan: selectedKelurahan!,
         foto: selectedImages.isNotEmpty ? selectedImages.first : null,
       );
-
       if (res['success'] == true) {
-        _showSuccessDialog(); // PANGGIL DIALOG BERHASIL
+        _showSuccessDialog();
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(res['message'] ?? "Gagal")));
       }
     } catch (e) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Terjadi kesalahan: $e")));
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  // Reusable Input Decoration
-  InputDecoration _inputStyle(String label, IconData icon) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, size: 20),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: true,
-      fillColor: Colors.grey[50],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Buat Laporan",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Informasi Laporan",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: judulController,
-                  decoration: _inputStyle("Judul Laporan", Icons.title),
-                  validator: (v) => v!.isEmpty ? "Judul wajib diisi" : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedCategory,
-                  decoration: _inputStyle("Pilih Kategori", Icons.category),
-                  items: _categories
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) => setState(() => selectedCategory = v),
-                  validator: (v) => v == null ? "Kategori wajib dipilih" : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: isiController,
-                  maxLines: 4,
-                  decoration:
-                      _inputStyle("Deskripsi Kejadian", Icons.description),
-                  validator: (v) => v!.isEmpty ? "Deskripsi wajib diisi" : null,
-                ),
-                const SizedBox(height: 24),
-                const Text("Lokasi Kejadian",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                DropdownButtonFormField(
-                  decoration:
-                      _inputStyle("Kota / Kabupaten", Icons.location_city),
-                  value: selectedKota,
-                  items: kotaList
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) {
-                    setState(() {
-                      selectedKota = v;
-                      kecamatanList = wilayahBanten[v!]!.keys.toList();
-                      selectedKecamatan = null;
-                      selectedKelurahan = null;
-                      kelurahanList = [];
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField(
-                        decoration: _inputStyle("Kecamatan", Icons.map),
-                        value: selectedKecamatan,
-                        items: kecamatanList
-                            .map((e) =>
-                                DropdownMenuItem(value: e, child: Text(e)))
-                            .toList(),
-                        onChanged: (v) {
-                          setState(() {
-                            selectedKecamatan = v;
-                            kelurahanList = wilayahBanten[selectedKota!]![v!]!;
-                            selectedKelurahan = null;
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: DropdownButtonFormField(
-                        decoration: _inputStyle("Kelurahan", Icons.pin_drop),
-                        value: selectedKelurahan,
-                        items: kelurahanList
-                            .map((e) =>
-                                DropdownMenuItem(value: e, child: Text(e)))
-                            .toList(),
-                        onChanged: (v) => setState(() => selectedKelurahan = v),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Text("Lampiran Foto",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: selectedImages.isEmpty
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.add_a_photo,
-                                  size: 40, color: Colors.grey),
-                              Text("Klik untuk tambah foto",
-                                  style: TextStyle(color: Colors.grey)),
-                            ],
-                          )
-                        : ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(selectedImages.first,
-                                fit: BoxFit.cover),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 5,
-                    ),
-                    onPressed: _isLoading ? null : _submitPengaduan,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            "KIRIM LAPORAN SEKARANG",
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
