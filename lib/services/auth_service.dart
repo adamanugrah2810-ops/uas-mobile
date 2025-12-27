@@ -3,14 +3,14 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Gunakan 10.0.2.2 untuk emulator Android ke localhost PC
-  final String baseUrl = 'http://127.0.0.1:8000/api';
-  // final String baseUrl = 'http://10.0.2.2:8000/api';
+  final String baseUrl = 'http://10.0.2.2:8000/api';
 
+  /// =========================
   /// LOGIN
+  /// =========================
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
-      var response = await http.post(
+      final response = await http.post(
         Uri.parse('$baseUrl/login'),
         headers: {
           "Accept": "application/json",
@@ -22,21 +22,18 @@ class AuthService {
         },
       );
 
-      var data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-      // Jika login berhasil
-      if (response.statusCode == 200 && data["success"] == true) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+      if (response.statusCode == 200 && data['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
 
-        // Simpan status login
-        await prefs.setBool("isLoggedIn", true);
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('token', data['token']);
 
-        await prefs.setString("token", data["token"]);
-
-        // PENTING: Key harus "userName" agar terbaca di HomePage
-        // Pastikan struktur response API Anda adalah data["data"]["name"]
-        await prefs.setString("userName", data["data"]["name"].toString());
-        await prefs.setString("userEmail", data["data"]["email"].toString());
+        await prefs.setString('userName', data['data']['name']);
+        await prefs.setString('userEmail', data['data']['email']);
+      } else {
+        await logout(); // bersihkan token jika gagal
       }
 
       return data;
@@ -45,11 +42,16 @@ class AuthService {
     }
   }
 
+  /// =========================
   /// REGISTER
+  /// =========================
   Future<Map<String, dynamic>> register(
-      String name, String email, String password) async {
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
-      var response = await http.post(
+      final response = await http.post(
         Uri.parse('$baseUrl/register'),
         headers: {
           "Accept": "application/json",
@@ -62,17 +64,19 @@ class AuthService {
         },
       );
 
-      var data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
-      // Jika register berhasil (biasanya status 201 atau 200)
       if ((response.statusCode == 200 || response.statusCode == 201) &&
-          data["success"] == true) {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
+          data['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
 
-        await prefs.setBool("isLoggedIn", true);
-        // Samakan key dengan yang di atas
-        await prefs.setString("userName", data["data"]["name"].toString());
-        await prefs.setString("userEmail", data["data"]["email"].toString());
+        await prefs.setBool('isLoggedIn', true);
+
+        // 🔴 WAJIB: SIMPAN TOKEN
+        await prefs.setString('token', data['token']);
+
+        await prefs.setString('userName', data['data']['name']);
+        await prefs.setString('userEmail', data['data']['email']);
       }
 
       return data;
@@ -81,17 +85,27 @@ class AuthService {
     }
   }
 
+  /// =========================
   /// LOGOUT
+  /// =========================
   Future<void> logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Menghapus semua data sesi
+    final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
-  /// CEK STATUS LOGIN
+  /// =========================
+  /// GET TOKEN (PENTING)
+  /// =========================
+  Future<String> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
+  /// =========================
+  /// CEK LOGIN
+  /// =========================
   Future<bool> isLoggedIn() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Cek apakah key isLoggedIn ada dan bernilai true
-    return prefs.getBool("isLoggedIn") ?? false;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isLoggedIn') ?? false;
   }
 }
