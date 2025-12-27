@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:mobile_auth/models/pengaduan.model.dart';
 
 class PengaduanService {
   // static const String baseUrl = 'http://10.0.2.2:8000/api';
@@ -71,7 +72,7 @@ class PengaduanService {
   }
 
   /// Ambil pengaduan milik user
-  static Future<List<dynamic>> getPengaduanSaya({
+  static Future<List<Pengaduan>> getPengaduanSaya({
     required String token,
   }) async {
     final response = await http.get(
@@ -85,9 +86,28 @@ class PengaduanService {
     final decoded = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      return decoded['data'];
+      return (decoded['data'] as List)
+          .map((e) => Pengaduan.fromJson(e))
+          .toList();
     } else {
       throw Exception(decoded['message'] ?? 'Gagal mengambil data');
+    }
+  }
+
+  static Future<void> deletePengaduan({
+    required String token,
+    required int id,
+  }) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/pengaduan/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal menghapus pengaduan');
     }
   }
 }
