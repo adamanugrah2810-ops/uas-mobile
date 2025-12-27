@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Gunakan 10.0.2.2 untuk emulator Android ke localhost PC
-  final String baseUrl = 'http://10.0.2.2:8000/api';
+  final String baseUrl = 'http://127.0.0.1:8000/api';
+  // final String baseUrl = 'http://10.0.2.2:8000/api';
 
   /// LOGIN
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -29,6 +30,8 @@ class AuthService {
 
         // Simpan status login
         await prefs.setBool("isLoggedIn", true);
+
+        await prefs.setString("token", data["token"]);
 
         // PENTING: Key harus "userName" agar terbaca di HomePage
         // Pastikan struktur response API Anda adalah data["data"]["name"]
