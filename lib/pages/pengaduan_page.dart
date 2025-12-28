@@ -29,27 +29,294 @@ class _PengaduanPageState extends State<PengaduanPage>
 
   final Map<String, Map<String, List<String>>> wilayahBanten = {
     "Kab. Tangerang": {
-      "Balaraja": ["Saga", "Sentul"],
-      "Cikupa": ["Sukamulya", "Talaga"],
-      "Cibodas": ["Cibodas Baru", "Cibodas Megah", "Panunggangan Barat"]
+      "Balaraja": [
+        "Saga",
+        "Sentul",
+        "Tobat",
+        "Talagasari",
+        "Cibadak",
+        "Gembong"
+      ],
+      "Cikupa": [
+        "Sukamulya",
+        "Talaga",
+        "Bojong",
+        "Bunder",
+        "Bunder Sari",
+        "Cikupa",
+        "Dukuh",
+        "Pasir Gadung",
+        "Sukadamai"
+      ],
+      "Cibodas": [
+        "Cibodas",
+        "Cibodas Baru",
+        "Cibodas Megah",
+        "Panunggangan Barat",
+        "Panunggangan Timur",
+        "Uwung Jaya"
+      ],
+      "Curug": ["Curug Kulon", "Curug Wetan", "Kadu", "Sukabakti", "Binong"],
+      "Kelapa Dua": [
+        "Kelapa Dua",
+        "Bojong Nangka",
+        "Pakualam",
+        "Bencongan",
+        "Bencongan Indah"
+      ],
+      "Pasar Kemis": [
+        "Pasar Kemis",
+        "Kutabumi",
+        "Kutabaru",
+        "Sukaasih",
+        "Sindangsari"
+      ],
+      "Rajeg": ["Rajeg", "Rajeg Mulya", "Rajeg Mekar", "Tanjakan", "Sukatani"],
+      "Tigaraksa": [
+        "Tigaraksa",
+        "Pasir Nangka",
+        "Pete",
+        "Matagara",
+        "Margasari"
+      ]
+    },
+    "Kota Cilegon": {
+      "Cibeber": ["Cibeber", "Kalitimbang", "Kedaleman"],
+      "Cilegon": ["Bagendung", "Ketileng", "Sukmajaya"],
+      "Citangkil": ["Citangkil", "Lebakdenok", "Warnasari"],
+      "Ciwandan": ["Ciwandan", "Banjarnegara", "Kubangsari"],
+      "Gerogol": ["Gerogol", "Kotasari", "Rawa Arum"],
+      "Jombang": ["Jombang Wetan", "Masigit", "Panggungrawi"],
+      "Pulomerak": ["Pulomerak", "Tamansari", "Suralaya"]
+    },
+    "Kab. Serang": {
+      "Anyar": ["Anyar", "Bandulu", "Kosambironyok"],
+      "Bojonegara": ["Bojonegara", "Margagiri", "Pulo Ampel"],
+      "Cikande": ["Cikande", "Cikande Permai", "Parigi"],
+      "Ciruas": ["Ciruas", "Pelawad", "Ranjeng"],
+      "Kibin": ["Kibin", "Nambo Ilir", "Tambak"],
+      "Kramatwatu": ["Kramatwatu", "Pejaten", "Terate"],
+      "Pontang": ["Pontang", "Singarajan", "Kubang Puji"],
+      "Tanara": ["Tanara", "Cerukcuk", "Lontar"]
+    },
+    "Kab. Lebak": {
+      "Bayah": ["Bayah Barat", "Bayah Timur", "Sawarna"],
+      "Cibadak": ["Cibadak", "Kaduagung", "Pasar Keong"],
+      "Cileles": ["Cileles", "Gumuruh", "Pasir Keong"],
+      "Leuwidamar": ["Leuwidamar", "Cibarani", "Lebaksitu"],
+      "Maja": ["Maja", "Binong", "Sangiang"],
+      "Rangkasbitung": [
+        "Rangkasbitung Barat",
+        "Rangkasbitung Timur",
+        "Cijoro Lebak"
+      ],
+      "Warunggunung": ["Warunggunung", "Cigelam", "Sindangsari"]
+    },
+    "Kab. Pandeglang": {
+      "Labuan": ["Labuan", "Kalanganyar", "Teluk"],
+      "Mandalawangi": ["Mandalawangi", "Cikoneng", "Parakan"],
+      "Menes": ["Menes", "Purwaraja", "Cipicung"],
+      "Panimbang": ["Panimbang", "Mekarsari", "Tanjungjaya"],
+      "Pandeglang": ["Pandeglang", "Kabayan", "Sukaresmi"],
+      "Sumur": ["Sumur", "Kertajaya", "Sumberjaya"]
     },
     "Kota Tangerang": {
-      "Ciledug": ["Paninggilan", "Sudimara Barat"]
+      "Batuceper": [
+        "Batuceper",
+        "Batujaya",
+        "Batusari",
+        "Poris Gaga",
+        "Poris Gaga Baru",
+        "Poris Plawad",
+        "Poris Plawad Indah"
+      ],
+      "Benda": [
+        "Benda",
+        "Belendung",
+        "Jurumudi",
+        "Jurumudi Baru",
+        "Pajang",
+        "Periuk Jaya"
+      ],
+      "Cibodas": [
+        "Cibodas",
+        "Cibodas Baru",
+        "Jatiuwung",
+        "Panunggangan Barat",
+        "Panunggangan Timur"
+      ],
+      "Ciledug": [
+        "Paninggilan",
+        "Paninggilan Utara",
+        "Sudimara Barat",
+        "Sudimara Selatan",
+        "Sudimara Timur",
+        "Sudimara Jaya"
+      ],
+      "Cipondoh": [
+        "Cipondoh",
+        "Cipondoh Indah",
+        "Cipondoh Makmur",
+        "Gondrong",
+        "Kenanga",
+        "Ketapang",
+        "Petir"
+      ],
+      "Jatiuwung": [
+        "Alam Jaya",
+        "Gandasari",
+        "Jatiuwung",
+        "Manis Jaya",
+        "Pasir Jaya"
+      ],
+      "Karangtengah": [
+        "Karang Tengah",
+        "Karang Mulya",
+        "Karang Timur",
+        "Pedurenan",
+        "Pondok Bahar"
+      ],
+      "Karawaci": [
+        "Bojong Jaya",
+        "Bugel",
+        "Cimone",
+        "Cimone Jaya",
+        "Gerendeng",
+        "Karawaci Baru",
+        "Karawaci Lama",
+        "Margasari",
+        "Nambo Jaya",
+        "Pasar Baru",
+        "Pabuaran"
+      ],
+      "Larangan": [
+        "Gaga",
+        "Kreo",
+        "Kreo Selatan",
+        "Larangan Indah",
+        "Larangan Selatan",
+        "Larangan Utara"
+      ],
+      "Neglasari": [
+        "Karangsari",
+        "Kedaung Baru",
+        "Mekarsari",
+        "Neglasari",
+        "Selapajang Jaya"
+      ],
+      "Periuk": ["Gebang Raya", "Periuk", "Periuk Jaya", "Sangiang Jaya"],
+      "Pinang": [
+        "Cipete",
+        "Kunciran",
+        "Kunciran Indah",
+        "Kunciran Jaya",
+        "Panunggangan",
+        "Panunggangan Utara"
+      ],
+      "Tangerang": [
+        "Babakan",
+        "Buaran Indah",
+        "Sukaasih",
+        "Sukasari",
+        "Tanah Tinggi"
+      ]
     },
     "Kota Serang": {
-      "Serang": ["Cipocok Jaya", "Kasemen", "Curug"]
+      "Serang": [
+        "Cipare",
+        "Cimuncang",
+        "Kota Baru",
+        "Lopang",
+        "Sumur Pecung",
+        "Unyur"
+      ],
+      "Cipocok Jaya": [
+        "Banjaragung",
+        "Banjarasri",
+        "Banjarsari",
+        "Cipocok Jaya",
+        "Gelam",
+        "Karundang",
+        "Panancangan"
+      ],
+      "Curug": ["Curug", "Cilaku", "Kemanisan", "Sukawana", "Tinggar"],
+      "Kasemen": [
+        "Kasemen",
+        "Banten",
+        "Margaluyu",
+        "Mesjid Priyayi",
+        "Sawah Luhur",
+        "Terumbu",
+        "Warung Jaud"
+      ],
+      "Taktakan": [
+        "Taktakan",
+        "Kuranji",
+        "Drangong",
+        "Kalang Anyar",
+        "Lontarbaru",
+        "Pancur",
+        "Panggungjati"
+      ],
+      "Walantaka": [
+        "Walantaka",
+        "Cigoong",
+        "Kepuren",
+        "Lebakwangi",
+        "Nyapah",
+        "Pabuaran",
+        "Pengampelan"
+      ]
     },
     "Kota Tangerang Selatan": {
       "Pamulang": [
-        "Pamulang",
-        "Benda Baru",
-        "Pondok Benda",
-        "Bambu Apus",
-        "Kedaung",
         "Pamulang Barat",
         "Pamulang Timur",
+        "Bambu Apus",
+        "Kedaung",
+        "Pondok Benda",
+        "Pondok Cabe Ilir",
         "Pondok Cabe Udik",
-        "Pondok Cabe Ilir"
+        "Benda Baru"
+      ],
+      "Ciputat": [
+        "Ciputat",
+        "Cipayung",
+        "Sawah Baru",
+        "Sawah Lama",
+        "Serua",
+        "Serua Indah",
+        "Jombang"
+      ],
+      "Ciputat Timur": [
+        "Cempaka Putih",
+        "Cireundeu",
+        "Pisangan",
+        "Pisangan Timur",
+        "Rengas",
+        "Rempoa"
+      ],
+      "Serpong": ["Serpong", "Buaran", "Ciater", "Cilenggang", "Rawa Buntu"],
+      "Serpong Utara": [
+        "Pakulonan",
+        "Pakulonan Barat",
+        "Pondok Jagung",
+        "Pondok Jagung Timur",
+        "Lengkong Karya"
+      ],
+      "Setu": ["Setu", "Keranggan", "Babakan", "Bakti Jaya", "Muncul"],
+      "Pondok Aren": [
+        "Pondok Aren",
+        "Pondok Kacang Barat",
+        "Pondok Kacang Timur",
+        "Pondok Jaya",
+        "Jurang Mangu Barat",
+        "Jurang Mangu Timur",
+        "Parigi",
+        "Parigi Baru",
+        "Pondok Betung",
+        "Pondok Pucung",
+        "Perigi Lama"
       ]
     }
   };
