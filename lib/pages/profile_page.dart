@@ -13,11 +13,12 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageUltraState extends State<ProfilePage> {
-  // --- PALETTE WARNA LUXURY ---
-  final Color primaryDark = const Color(0xFF0F172A);
-  final Color accentGold = const Color(0xFFC5A059);
-  final Color accentBlue = const Color(0xFF3B82F6);
-  final Color bgCanvas = const Color(0xFFF8FAFC);
+  // --- PALETTE WARNA AZURE LUXURY ---
+  final Color primaryBlue = const Color(0xFF1E40AF);
+  final Color lightBlue = const Color(0xFFDBEAFE);
+  final Color accentCyan = const Color(0xFF0EA5E9);
+  final Color pureWhite = Colors.white;
+  final Color textMain = const Color(0xFF1E293B);
 
   String username = "Warga Banten";
   String email = "user@banten.go.id";
@@ -34,7 +35,6 @@ class _ProfilePageUltraState extends State<ProfilePage> {
     _loadUserData();
   }
 
-  // MEMUAT DATA DARI STORAGE
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -47,63 +47,126 @@ class _ProfilePageUltraState extends State<ProfilePage> {
     });
   }
 
-  // FUNGSI UPDATE DATA (EDIT PROFILE)
-  Future<void> _updateProfile(
-      String newName, String newBio, String newPhone) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString("userName", newName);
-    await prefs.setString("userBio", newBio);
-    await prefs.setString("userPhone", newPhone);
-    _loadUserData(); // Refresh tampilan
-  }
-
-  // FUNGSI PICK IMAGE
+  // FUNGSI GANTI FOTO
   Future<void> _pickImage() async {
-    final XFile? image =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("profileImage", image.path);
       setState(() => profilePath = image.path);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Foto profil diperbarui!")),
+      );
     }
   }
 
-  // FUNGSI LOGOUT
-  Future<void> _handleLogout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-    if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  // DIALOG EDIT DATA
+  void _showEditDialog() {
+    final nameController = TextEditingController(text: username);
+    final phoneController = TextEditingController(text: phone);
+    final bioController = TextEditingController(text: bio);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 20),
+            Text("Edit Profil",
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                    labelText: "Nama Lengkap", border: OutlineInputBorder())),
+            const SizedBox(height: 15),
+            TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                    labelText: "Nomor Telepon", border: OutlineInputBorder())),
+            const SizedBox(height: 15),
+            TextField(
+                controller: bioController,
+                decoration: const InputDecoration(
+                    labelText: "Bio", border: OutlineInputBorder())),
+            const SizedBox(height: 25),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryBlue,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setString("userName", nameController.text);
+                  await prefs.setString("userPhone", phoneController.text);
+                  await prefs.setString("userBio", bioController.text);
+                  _loadUserData();
+                  Navigator.pop(context);
+                },
+                child: const Text("Simpan Perubahan",
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bgCanvas,
+      backgroundColor: const Color(0xFFF1F5F9),
       body: isLoading
-          ? Center(child: CircularProgressIndicator(color: primaryDark))
+          ? Center(child: CircularProgressIndicator(color: primaryBlue))
           : CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                _buildModernAppBar(),
+                _buildLuxuryHeader(),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 25, 20, 100),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
-                        _buildSectionHeader("INFORMASI PRIBADI"),
-                        _buildInfoCard(),
                         const SizedBox(height: 30),
-                        _buildSectionHeader("PENGATURAN & KEAMANAN"),
-                        _buildActionMenu(),
+                        _buildSectionHeader("DATA PERSONAL"),
+                        _buildPremiumCard(),
+                        const SizedBox(height: 30),
+                        _buildSectionHeader("AKTIVITAS TERBARU"),
+                        _buildRecentActivity(),
+                        const SizedBox(height: 30),
+                        _buildSectionHeader("AKSES CEPAT"),
+                        _buildGridMenu(),
                         const SizedBox(height: 40),
                         _buildLogoutButton(),
-                        const SizedBox(height: 25),
-                        Text("Versi 2.0.2 • Banten Digital System",
-                            style: GoogleFonts.inter(
+                        const SizedBox(height: 30),
+                        Text("BANTEN DIGITAL CONNECT v2.5",
+                            style: GoogleFonts.plusJakartaSans(
                                 color: Colors.grey[400],
                                 fontSize: 10,
-                                letterSpacing: 0.8)),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 2)),
+                        const SizedBox(height: 50),
                       ],
                     ),
                   ),
@@ -113,110 +176,144 @@ class _ProfilePageUltraState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildModernAppBar() {
+  Widget _buildLuxuryHeader() {
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: 300,
       pinned: true,
       elevation: 0,
-      backgroundColor: primaryDark,
+      stretch: true,
+      backgroundColor: primaryBlue,
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [primaryDark, const Color(0xFF1E293B)],
+        background: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primaryBlue, accentCyan],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              _buildLuxuryAvatar(),
-              const SizedBox(height: 15),
-              Text(username,
-                  style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800)),
-              Text(email,
-                  style: GoogleFonts.inter(
-                      color: Colors.white.withOpacity(0.6), fontSize: 13)),
-            ],
-          ),
+            Positioned(
+                top: -50, right: -50, child: _blurCircle(180, Colors.white10)),
+            Positioned(
+                bottom: 20, left: -30, child: _blurCircle(100, Colors.white12)),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                _buildAvatarFrame(),
+                const SizedBox(height: 15),
+                Text(username,
+                    style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800)),
+                Text(email,
+                    style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        letterSpacing: 0.5)),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLuxuryAvatar() {
+  Widget _buildAvatarFrame() {
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
         Container(
           padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: accentGold.withOpacity(0.5), width: 2)),
-          child: CircleAvatar(
-            radius: 50,
-            backgroundColor: const Color(0xFF334155),
-            backgroundImage:
-                profilePath != null ? FileImage(File(profilePath!)) : null,
-            child: profilePath == null
-                ? const Icon(Icons.person_rounded,
-                    size: 50, color: Colors.white24)
-                : null,
+          decoration: const BoxDecoration(
+              color: Colors.white30, shape: BoxShape.circle),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+            child: CircleAvatar(
+              radius: 55,
+              backgroundColor: lightBlue,
+              backgroundImage:
+                  profilePath != null ? FileImage(File(profilePath!)) : null,
+              child: profilePath == null
+                  ? Icon(Icons.person_outline_rounded,
+                      size: 50, color: primaryBlue)
+                  : null,
+            ),
           ),
         ),
         GestureDetector(
           onTap: _pickImage,
           child: Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: accentGold,
+            decoration: const BoxDecoration(
+                color: Colors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: primaryDark, width: 3)),
-            child: const Icon(Icons.camera_alt_rounded,
-                size: 16, color: Colors.white),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 4))
+                ]),
+            child: Icon(Icons.camera_alt_rounded, size: 18, color: primaryBlue),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildPremiumCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: pureWhite,
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: primaryBlue.withOpacity(0.05),
               blurRadius: 20,
               offset: const Offset(0, 10))
         ],
       ),
       child: Column(
         children: [
-          _infoRow(Icons.phone_iphone_rounded, "Telepon", phone),
+          _infoTile(Icons.phone_iphone_rounded, "Telepon", phone),
           _divider(),
-          _infoRow(Icons.notes_rounded, "Bio Singkat", bio),
+          _infoTile(Icons.info_outline_rounded, "Biografi", bio),
           _divider(),
-          _infoRow(Icons.verified_user_rounded, "Status Akun", "Terverifikasi",
-              isVerified: true),
+          InkWell(
+            onTap: _showEditDialog,
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(28)),
+            child: _infoTile(Icons.edit_note_rounded, "Pengaturan Akun",
+                "Klik untuk edit data diri",
+                isAction: true),
+          ),
         ],
       ),
     );
   }
 
-  Widget _infoRow(IconData icon, String label, String value,
-      {bool isVerified = false}) {
+  Widget _infoTile(IconData icon, String label, String value,
+      {bool isAction = false}) {
     return Padding(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: accentBlue.withOpacity(0.7)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+                color: lightBlue.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: primaryBlue, size: 20),
+          ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -224,164 +321,149 @@ class _ProfilePageUltraState extends State<ProfilePage> {
               children: [
                 Text(label,
                     style: GoogleFonts.inter(
-                        fontSize: 10, color: Colors.grey[500])),
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.bold)),
                 Text(value,
-                    style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isVerified ? Colors.green[700] : primaryDark)),
+                    style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isAction ? primaryBlue : textMain)),
               ],
             ),
-          )
+          ),
+          if (isAction)
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: primaryBlue),
         ],
       ),
     );
   }
 
-  Widget _buildActionMenu() {
-    return Column(
+  Widget _buildRecentActivity() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        children: [
+          _activityItem("Laporan Dikirim", "Laporan infrastruktur jalan rusak",
+              "2 jam yang lalu", Icons.description_rounded),
+          const Divider(),
+          _activityItem("Login Berhasil", "Masuk melalui perangkat baru",
+              "Kemarin", Icons.security_rounded),
+        ],
+      ),
+    );
+  }
+
+  Widget _activityItem(String title, String sub, String time, IconData icon) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+          backgroundColor: lightBlue,
+          child: Icon(icon, color: primaryBlue, size: 20)),
+      title: Text(title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      subtitle: Text(sub, style: const TextStyle(fontSize: 12)),
+      trailing:
+          Text(time, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+    );
+  }
+
+  Widget _buildGridMenu() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 15,
+      crossAxisSpacing: 15,
+      childAspectRatio: 1.5,
       children: [
-        _luxuryMenuTile("Edit Profile", "Ubah data diri Anda",
-            Icons.person_outline_rounded, accentBlue, () {
-          _showEditDialog();
-        }),
-        _luxuryMenuTile("Keamanan Akun", "Kata sandi & privasi",
-            Icons.lock_open_rounded, const Color(0xFF10B981), () {}),
-        _luxuryMenuTile("Pengaturan Aplikasi", "Notifikasi & bahasa",
-            Icons.settings_suggest_rounded, accentGold, () {}),
+        _gridItem("Layanan", Icons.apps_rounded, Colors.blue, () {}),
+        _gridItem("Notifikasi", Icons.notifications_active_rounded,
+            Colors.orange, () {}),
+        _gridItem("Keamanan", Icons.admin_panel_settings_rounded, Colors.indigo,
+            () {}),
+        _gridItem("Bantuan", Icons.headset_mic_rounded, Colors.blueGrey, () {}),
       ],
     );
   }
 
-  Widget _luxuryMenuTile(String title, String sub, IconData icon, Color color,
-      VoidCallback onTap) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14)),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        title: Text(title,
-            style: GoogleFonts.plusJakartaSans(
-                fontWeight: FontWeight.w700, fontSize: 14, color: primaryDark)),
-        subtitle: Text(sub,
-            style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[500])),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
+  Widget _gridItem(
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
-      onTap: _showLogoutConfirmDialog,
+      onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.red.withOpacity(0.1)),
-        ),
-        child: Center(
-          child: Text("KELUAR APLIKASI",
-              style: GoogleFonts.plusJakartaSans(
-                  color: Colors.red[700],
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: 1.2)),
-        ),
-      ),
-    );
-  }
-
-  // --- DIALOG EDIT PROFILE ---
-  void _showEditDialog() {
-    final nameCtrl = TextEditingController(text: username);
-    final bioCtrl = TextEditingController(text: bio);
-    final phoneCtrl = TextEditingController(text: phone);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Edit Data Diri"),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: "Nama")),
-              TextField(
-                  controller: bioCtrl,
-                  decoration: const InputDecoration(labelText: "Bio")),
-              TextField(
-                  controller: phoneCtrl,
-                  decoration: const InputDecoration(labelText: "Telepon")),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal")),
-          ElevatedButton(
-            onPressed: () {
-              _updateProfile(nameCtrl.text, bioCtrl.text, phoneCtrl.text);
-              Navigator.pop(context);
-            },
-            child: const Text("Simpan"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- DIALOG LOGOUT ---
-  void _showLogoutConfirmDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text("Konfirmasi"),
-          content: const Text("Yakin ingin keluar dari akun ini?"),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Batal")),
-            TextButton(
-                onPressed: _handleLogout,
-                child: const Text("Ya, Keluar",
-                    style: TextStyle(color: Colors.red))),
+            color: pureWhite,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: lightBlue.withOpacity(0.5))),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(title,
+                style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: textMain)),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildLogoutButton() {
+    return GestureDetector(
+      onTap: () {
+        // Logika Logout Anda di sini
+      },
+      child: Container(
+        width: double.infinity,
+        height: 60,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: const LinearGradient(
+                colors: [Color(0xFFEF4444), Color(0xFFB91C1C)]),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.red.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8))
+            ]),
+        child: Center(
+          child: Text("KELUAR SISTEM",
+              style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1)),
+        ),
+      ),
+    );
+  }
+
+  Widget _blurCircle(double size, Color color) {
+    return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color));
+  }
+
   Widget _divider() =>
-      Divider(height: 1, thickness: 0.5, color: Colors.grey[100], indent: 50);
+      Divider(height: 1, thickness: 1, color: lightBlue.withOpacity(0.3));
+
   Widget _buildSectionHeader(String title) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 5, bottom: 15),
         child: Text(title,
-            style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Colors.grey[400],
+            style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: primaryBlue,
                 letterSpacing: 1.5)),
       ),
     );
