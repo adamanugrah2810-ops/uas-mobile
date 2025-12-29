@@ -5,8 +5,9 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mobile_auth/models/pengaduan.model.dart';
 
 class PengaduanService {
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
-
+  static const String baseUrl = 'https://backend-mobile.projecttkuuu.my.id/api';
+// static const String baseUrl = 'http://127.0.0.1:8000/api';
+// final String baseUrl = 'https://10.0.2.2:8000/api';
   /// ===============================
   /// KIRIM PENGADUAN (MULTIPART)
   /// ===============================
