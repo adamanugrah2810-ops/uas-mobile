@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_auth/models/pengaduan.model.dart';
 import 'package:mobile_auth/services/pengaduan.service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// Import halaman edit di bagian paling atas file detail
+import 'package:mobile_auth/pages/laporan/edit_pengaduan_page.dart';
 
 class LaporanDetailPage extends StatelessWidget {
   final Pengaduan pengaduan;
@@ -299,7 +301,22 @@ class LaporanDetailPage extends StatelessWidget {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  // Navigasi ke halaman Edit dengan membawa data pengaduan saat ini
+                  bool? isUpdated = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          EditPengaduanPage(pengaduan: pengaduan),
+                    ),
+                  );
+
+                  // Jika setelah edit user menekan 'Simpan' (mengembalikan nilai true)
+                  if (isUpdated == true) {
+                    // Kembali ke halaman daftar laporan dan suruh daftar tersebut refresh
+                    Navigator.pop(context, true);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _sapphireBlue,
                   shape: RoundedRectangleBorder(

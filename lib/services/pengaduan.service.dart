@@ -6,7 +6,6 @@ import 'package:mobile_auth/models/pengaduan.model.dart';
 
 class PengaduanService {
   static const String baseUrl = 'http://10.0.2.2:8000/api';
-  // static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   /// ===============================
   /// KIRIM PENGADUAN (MULTIPART)
@@ -16,8 +15,8 @@ class PengaduanService {
     required String judul,
     required String deskripsi,
     required String kategori,
-    required String provinsi, // Provinsi
-    required String kota, // ✅ TAMBAHAN
+    required String provinsi,
+    required String kota,
     required String kecamatan,
     required String kelurahan,
     File? foto,
@@ -25,24 +24,21 @@ class PengaduanService {
     final uri = Uri.parse('$baseUrl/pengaduan');
     final request = http.MultipartRequest('POST', uri);
 
-    /// Header Auth (Laravel Sanctum)
     request.headers.addAll({
       'Authorization': 'Bearer $token',
       'Accept': 'application/json',
     });
 
-    /// Field text (sinkron backend)
     request.fields.addAll({
       'judul': judul,
       'deskripsi': deskripsi,
       'kategori': kategori,
       'provinsi': provinsi,
-      'kota': kota, // ✅
+      'kota': kota,
       'kecamatan': kecamatan,
       'kelurahan': kelurahan,
     });
 
-    /// Upload foto (optional)
     if (foto != null) {
       request.files.add(
         await http.MultipartFile.fromPath(
@@ -53,10 +49,8 @@ class PengaduanService {
       );
     }
 
-    /// Send request
     final streamedResponse = await request.send();
     final responseBody = await streamedResponse.stream.bytesToString();
-
     final decoded = jsonDecode(responseBody);
 
     if (streamedResponse.statusCode == 201 ||
@@ -98,6 +92,75 @@ class PengaduanService {
     }
   }
 
+  /// ========================================
+  /// UPDATE PENGADUAN MASYARAKAT (MULTIPART)
+  /// ========================================
+  static Future<Map<String, dynamic>> updatePengaduan({
+    required String token,
+    required int id,
+    required String judul,
+    required String deskripsi,
+    required String kategori,
+    required String provinsi,
+    required String kota,
+    required String kecamatan,
+    required String kelurahan,
+    File? foto,
+  }) async {
+    // URL DIUBAH: Mengarah ke endpoint updateMasyarakat yang baru kita buat
+    final uri = Uri.parse('$baseUrl/pengaduan-update/$id');
+
+    // Menggunakan POST karena membawa File (Multipart)
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll({
+      'Authorization': 'Bearer $token',
+      'Accept': 'application/json',
+    });
+
+    // Masukkan data teks
+    request.fields.addAll({
+      'judul': judul,
+      'deskripsi': deskripsi,
+      'kategori': kategori,
+      'provinsi': provinsi,
+      'kota': kota,
+      'kecamatan': kecamatan,
+      'kelurahan': kelurahan,
+    });
+
+    // Masukkan foto jika ada yang baru
+    if (foto != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'foto',
+          foto.path,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    }
+
+    final streamedResponse = await request.send();
+    final responseBody = await streamedResponse.stream.bytesToString();
+    final decoded = jsonDecode(responseBody);
+
+    if (streamedResponse.statusCode == 200) {
+      return {
+        'success': true,
+        'message': decoded['message'] ?? 'Pengaduan berhasil diperbarui',
+        'data': decoded['data'],
+      };
+    } else {
+      return {
+        'success': false,
+        'message':
+            decoded['message'] ?? 'Gagal memperbarui pengaduan (Akses Ditolak)',
+        'errors': decoded['errors'],
+      };
+    }
+  }
+
+  /// Hapus pengaduan
   static Future<void> deletePengaduan({
     required String token,
     required int id,
