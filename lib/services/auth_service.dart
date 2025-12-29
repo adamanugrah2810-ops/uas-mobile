@@ -3,7 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final String baseUrl = 'http://10.0.2.2:8000/api';
+  static const String baseUrl = 'https://backend-mobile.projecttkuuu.my.id/api';
+  // final String baseUrl = 'https://10.0.2.2:8000/api';
   // static const String baseUrl = 'http://127.0.0.1:8000/api';
 
   /// =========================
