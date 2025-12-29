@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:ui'; // Wajib untuk efek Glassmorphism
+import 'dart:ui';
 
-// Pastikan file-file ini sudah Anda buat di folder project
+// Import halaman-halaman Anda
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'laporan/laporan_page.dart';
@@ -17,7 +17,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Palette Warna Premium (Konsisten dengan Login & Home)
+  // Ultra-Premium Palette
   final Color _primaryBlue = const Color(0xFF0052D4);
   final Color _royalAzure = const Color(0xFF4364F7);
   final Color _lightSky = const Color(0xFF6FB1FC);
@@ -27,42 +27,36 @@ class _DashboardPageState extends State<DashboardPage> {
   String userName = "Memuat...";
   String userEmail = "Memuat...";
 
-  // List halaman utama sesuai urutan Bottom Nav
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi halaman
     _pages = [
       HomePage(),
-      LaporanPage(),
-      PengaduanPage(),
+      const LaporanPage(),
+      const PengaduanPage(),
       const ProfilePage(),
     ];
     _loadUser();
   }
 
-  // Mengambil data user dari session (Shared Preferences)
   Future<void> _loadUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      // Key harus sama dengan yang ada di AuthService
       userName = prefs.getString("userName") ?? "User";
       userEmail = prefs.getString("userEmail") ?? "Email tidak tersedia";
     });
   }
 
-  // Fungsi Logout
   void logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Hapus semua sesi
+    await prefs.clear();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
-      (route) =>
-          false, // Hapus semua history navigasi agar tidak bisa "back" ke dashboard
+      (route) => false,
     );
   }
 
@@ -70,7 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgColor,
-      extendBody: true, // Membuat konten scrolling di belakang navbar floating
+      extendBody: true, // PENTING: Agar konten meluncur di belakang navbar
       appBar: _buildPremiumAppBar(context),
       drawer: _buildModernDrawer(),
       body: PageTransitionSwitcher(
@@ -80,7 +74,121 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // --- APP BAR MINIMALIS ---
+  // --- FLOATING NAVBAR ULTRA LUXURY ---
+  Widget _buildFloatingNavbar() {
+    return Container(
+      height: 80,
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          // Background Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                height: 70,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(35),
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.5), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primaryBlue.withOpacity(0.15),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _navItem(Icons.grid_view_rounded, 0, "Beranda"),
+                    _navItem(Icons.assignment_rounded, 1, "Laporan"),
+                    const SizedBox(
+                        width: 50), // Ruang kosong untuk tombol tengah
+                    _navItem(Icons.notifications_rounded, 2, "Notif"),
+                    _navItem(Icons.person_rounded, 3, "Profil"),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Tombol Tengah Melayang (Aduan)
+          Positioned(
+            top: 0,
+            child: _buildCenterAduanButton(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, int index, String label) {
+    bool isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color:
+              isSelected ? _primaryBlue.withOpacity(0.08) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? _primaryBlue : Colors.grey.shade400,
+              size: 26,
+            ),
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                height: 4,
+                width: 4,
+                decoration:
+                    BoxDecoration(color: _primaryBlue, shape: BoxShape.circle),
+              )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterAduanButton() {
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = 2), // Index PengaduanPage
+      child: Container(
+        height: 58,
+        width: 58,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [_primaryBlue, _royalAzure, _lightSky],
+          ),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 4),
+          boxShadow: [
+            BoxShadow(
+              color: _primaryBlue.withOpacity(0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 35),
+      ),
+    );
+  }
+
   PreferredSizeWidget _buildPremiumAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white.withOpacity(0.8),
@@ -117,102 +225,16 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       actions: [
-        Container(
-          margin: const EdgeInsets.only(right: 15),
-          child: IconButton(
-            icon: Icon(Icons.notifications_none_rounded,
-                color: _primaryBlue, size: 26),
-            onPressed: () {},
-          ),
+        IconButton(
+          padding: const EdgeInsets.only(right: 15),
+          icon: Icon(Icons.notifications_none_rounded,
+              color: _primaryBlue, size: 26),
+          onPressed: () {},
         ),
       ],
     );
   }
 
-  // --- FLOATING NAVBAR (GLASSMORPHISM) ---
-  Widget _buildFloatingNavbar() {
-    return Container(
-      height: 75,
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryBlue.withOpacity(0.15),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withOpacity(0.5)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem(Icons.grid_view_rounded, 0, "Home"),
-                _navItem(Icons.assignment_outlined, 1, "Laporan"),
-                _navItem(Icons.add_circle_rounded, 2, "Aduan", isSpecial: true),
-                _navItem(Icons.person_outline_rounded, 3, "Profil"),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, int index, String label,
-      {bool isSpecial = false}) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            padding: EdgeInsets.all(isSpecial ? 12 : 8),
-            decoration: BoxDecoration(
-              gradient: isSpecial
-                  ? LinearGradient(colors: [_primaryBlue, _lightSky])
-                  : null,
-              color: isSelected && !isSpecial
-                  ? _primaryBlue.withOpacity(0.1)
-                  : Colors.transparent,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: isSpecial
-                  ? Colors.white
-                  : (isSelected ? _primaryBlue : Colors.grey.shade400),
-              size: isSpecial ? 28 : 24,
-            ),
-          ),
-          if (!isSpecial && isSelected)
-            Container(
-              margin: const EdgeInsets.only(top: 4),
-              width: 5,
-              height: 5,
-              decoration:
-                  BoxDecoration(color: _primaryBlue, shape: BoxShape.circle),
-            )
-        ],
-      ),
-    );
-  }
-
-  // --- DRAWER (SIDEBAR) MODERN ---
   Widget _buildModernDrawer() {
     return Drawer(
       backgroundColor: Colors.white,
@@ -274,7 +296,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
           Text(userEmail,
               style: TextStyle(
                   color: Colors.white.withOpacity(0.8), fontSize: 12)),
@@ -308,7 +329,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-// Efek transisi antar halaman
 class PageTransitionSwitcher extends StatelessWidget {
   final Widget child;
   const PageTransitionSwitcher({required this.child, super.key});
@@ -322,7 +342,7 @@ class PageTransitionSwitcher extends StatelessWidget {
           opacity: animation,
           child: SlideTransition(
             position:
-                Tween<Offset>(begin: const Offset(0.01, 0), end: Offset.zero)
+                Tween<Offset>(begin: const Offset(0.02, 0), end: Offset.zero)
                     .animate(animation),
             child: child,
           ),
