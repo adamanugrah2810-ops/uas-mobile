@@ -12,10 +12,11 @@ class LaporanPage extends StatefulWidget {
 }
 
 class _LaporanPageState extends State<LaporanPage> {
-  // Executive White-Blue Palette
-  final Color _bgLight = const Color(0xFFF4F7FE);
-  final Color _primaryBlue = const Color(0xFF1E40AF);
-  final Color _accentBlue = const Color(0xFF3B82F6);
+  // Enhanced Executive Palette
+  final Color _bgLight = const Color(0xFFF8FAFF);
+  final Color _primaryBlue = const Color(0xFF0F172A); // Deep Navy
+  final Color _accentBlue = const Color(0xFF3B82F6); // Royal Blue
+  final Color _softBlue = const Color(0xFFEFF6FF); // Light Sky
   final Color _darkText = const Color(0xFF1E293B);
 
   bool _isLoading = true;
@@ -60,42 +61,51 @@ class _LaporanPageState extends State<LaporanPage> {
       backgroundColor: _bgLight,
       body: RefreshIndicator(
         onRefresh: _fetchPengaduan,
-        color: _primaryBlue,
+        color: _accentBlue,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 1. HEADER YANG HILANG SAAT SCROLL
             _buildSliverHeader(),
-
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // 2. STATS BENTO GRID (DIBUNGKUS SIZEDBOX UNTUK TINGGI)
-                  _buildSectionLabel("Ringkasan Aktivitas"),
+                  // 1. STATS BENTO GRID
+                  _buildSectionLabel(
+                      "Ringkasan Aktivitas", "Data terkini laporan Anda"),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 180, // Penentu tinggi agar tidak error
+                    height: 190,
                     child: _buildBentoStats(),
                   ),
 
                   const SizedBox(height: 32),
 
-                  // 3. INSIGHT CARD
+                  // 2. INSIGHT CARD (EFEKTIVITAS)
                   _buildInsightCard(),
+
+                  const SizedBox(height: 32),
+
+                  // 3. NEW: PENGUMUMAN / INFO SLIDER (KONTEN TAMBAHAN)
+                  _buildSectionLabel(
+                      "Informasi Penting", "Berita & prosedur terbaru"),
+                  const SizedBox(height: 16),
+                  _buildInfoCard(),
 
                   const SizedBox(height: 32),
 
                   // 4. FEATURED CARD
                   if (_reports.isNotEmpty) ...[
-                    _buildSectionLabel("Update Terakhir"),
+                    _buildSectionLabel(
+                        "Update Terakhir", "Laporan yang baru saja diperbarui"),
                     const SizedBox(height: 16),
                     _buildFeaturedCard(_reports.first),
                     const SizedBox(height: 32),
                   ],
 
                   // 5. LAYANAN CEPAT
-                  _buildSectionLabel("Layanan Cepat"),
+                  _buildSectionLabel(
+                      "Layanan Cepat", "Akses instan kategori populer"),
                   const SizedBox(height: 16),
                   _buildQuickAccessGrid(),
 
@@ -105,16 +115,34 @@ class _LaporanPageState extends State<LaporanPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildSectionLabel("Semua Laporan"),
-                      Text(
-                        "Total: $_total",
-                        style: TextStyle(
-                            color: _primaryBlue, fontWeight: FontWeight.bold),
+                      _buildSectionLabel(
+                          "Semua Laporan", "Daftar riwayat lengkap"),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                            color: _accentBlue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Text(
+                          "Total: $_total",
+                          style: TextStyle(
+                              color: _accentBlue,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   _buildHistoryList(),
+
+                  const SizedBox(height: 32),
+
+                  // 7. NEW: PANDUAN PENGGUNAAN (KONTEN TAMBAHAN)
+                  _buildSectionLabel("Panduan", "Cara menggunakan aplikasi"),
+                  const SizedBox(height: 16),
+                  _buildGuideSection(),
+
                   const SizedBox(height: 100),
                 ]),
               ),
@@ -129,45 +157,68 @@ class _LaporanPageState extends State<LaporanPage> {
 
   Widget _buildSliverHeader() {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 200,
       collapsedHeight: 0,
       toolbarHeight: 0,
-      pinned: false, // Membuatnya hilang saat di-scroll
-      floating: false,
-      backgroundColor: _primaryBlue,
+      pinned: false,
       flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_primaryBlue, _accentBlue],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("DASHBOARD EKSEKUTIF",
-                      style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 10,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text("Manajemen\nLaporan Anda",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          height: 1.1)),
-                ],
+        background: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_primaryBlue, _accentBlue],
+                ),
               ),
             ),
-          ),
+            // Decorative Circle 1
+            Positioned(
+              top: -50,
+              right: -50,
+              child: CircleAvatar(
+                  radius: 100, backgroundColor: Colors.white.withOpacity(0.05)),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(25.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text("PRO VERSION",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text("Manajemen\nLaporan Digital",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1)),
+                    const SizedBox(height: 8),
+                    Text(
+                        "Pantau pengaduan Anda dalam satu dasbor terintegrasi.",
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 13)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -176,24 +227,22 @@ class _LaporanPageState extends State<LaporanPage> {
   Widget _buildBentoStats() {
     return Row(
       children: [
-        // Kiri: Card Besar
         Expanded(
           flex: 2,
           child: _statTileLarge(
-              "Aktif", _proses.toString(), Icons.bubble_chart_rounded),
+              "Laporan Aktif", _proses.toString(), Icons.analytics_rounded),
         ),
         const SizedBox(width: 12),
-        // Kanan: Stack Card Kecil
         Expanded(
           child: Column(
             children: [
               Expanded(
                   child: _statTileSmall(
-                      "Selesai", _selesai.toString(), Colors.green)),
+                      "Selesai", _selesai.toString(), const Color(0xFF10B981))),
               const SizedBox(height: 12),
               Expanded(
                   child: _statTileSmall(
-                      "Ditolak", _ditolak.toString(), Colors.redAccent)),
+                      "Ditolak", _ditolak.toString(), const Color(0xFFEF4444))),
             ],
           ),
         ),
@@ -203,28 +252,33 @@ class _LaporanPageState extends State<LaporanPage> {
 
   Widget _statTileLarge(String label, String val, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
+              color: _primaryBlue.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 10))
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: _primaryBlue, size: 30),
+          CircleAvatar(
+            backgroundColor: _softBlue,
+            child: Icon(icon, color: _accentBlue, size: 20),
+          ),
           const Spacer(),
           Text(val,
               style: TextStyle(
-                  color: _darkText, fontSize: 32, fontWeight: FontWeight.w900)),
+                  color: _darkText, fontSize: 38, fontWeight: FontWeight.w900)),
           Text(label,
-              style: const TextStyle(
-                  color: Colors.grey, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13)),
         ],
       ),
     );
@@ -235,18 +289,24 @@ class _LaporanPageState extends State<LaporanPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: color.withOpacity(0.1)),
+        boxShadow: [
+          BoxShadow(
+              color: color.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(val,
               style: TextStyle(
-                  color: color, fontSize: 20, fontWeight: FontWeight.w900)),
+                  color: color, fontSize: 22, fontWeight: FontWeight.w900)),
           Text(label,
-              style: const TextStyle(
-                  color: Colors.grey,
+              style: TextStyle(
+                  color: Colors.grey.shade500,
                   fontSize: 10,
                   fontWeight: FontWeight.bold)),
         ],
@@ -257,11 +317,17 @@ class _LaporanPageState extends State<LaporanPage> {
   Widget _buildInsightCard() {
     double progress = _total == 0 ? 0 : _selesai / _total;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-            colors: [_primaryBlue, _primaryBlue.withOpacity(0.8)]),
-        borderRadius: BorderRadius.circular(24),
+        gradient:
+            LinearGradient(colors: [_accentBlue, const Color(0xFF2563EB)]),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+              color: _accentBlue.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10))
+        ],
       ),
       child: Row(
         children: [
@@ -269,31 +335,69 @@ class _LaporanPageState extends State<LaporanPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Efektivitas Laporan",
+                const Text("Tingkat Penyelesaian",
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text("$_selesai laporan berhasil diselesaikan",
-                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
+                const SizedBox(height: 6),
+                Text(
+                    "Sistem telah memproses $_selesai laporan dengan status tuntas.",
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.8), fontSize: 12)),
               ],
             ),
           ),
+          const SizedBox(width: 20),
           SizedBox(
-            height: 50,
-            width: 50,
+            height: 65,
+            width: 65,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CircularProgressIndicator(
                     value: progress,
                     color: Colors.white,
-                    backgroundColor: Colors.white24,
-                    strokeWidth: 5),
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    strokeWidth: 8,
+                    strokeCap: StrokeCap.round),
                 Text("${(progress * 100).toInt()}%",
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold)),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _softBlue,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _accentBlue.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: _accentBlue, size: 30),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Update Kebijakan",
+                    style: TextStyle(
+                        color: _primaryBlue, fontWeight: FontWeight.bold)),
+                Text(
+                    "Laporan di hari libur akan diproses pada jam kerja berikutnya.",
+                    style: TextStyle(
+                        color: _primaryBlue.withOpacity(0.6), fontSize: 11)),
               ],
             ),
           )
@@ -307,35 +411,68 @@ class _LaporanPageState extends State<LaporanPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _primaryBlue.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: _accentBlue.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 15,
+              offset: const Offset(0, 8))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _statusBadge(report.status),
-          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _statusBadge(report.status),
+              Text("#${report.id.toString().padLeft(4, '0')}",
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 20),
           Text(report.judul,
               style: TextStyle(
-                  color: _darkText, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(report.kategori,
-              style: TextStyle(color: _accentBlue, fontSize: 13)),
-          const SizedBox(height: 20),
-          GestureDetector(
+                  color: _darkText, fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.category_outlined, size: 14, color: _accentBlue),
+              const SizedBox(width: 6),
+              Text(report.kategori,
+                  style: TextStyle(
+                      color: _accentBlue,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          InkWell(
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (_) => LaporanDetailPage(pengaduan: report))),
-            child: Row(
-              children: [
-                Text("Lihat rincian laporan",
-                    style: TextStyle(
-                        color: _primaryBlue, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_rounded,
-                    size: 16, color: _primaryBlue),
-              ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                  color: _primaryBlue, borderRadius: BorderRadius.circular(15)),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Buka Detail Laporan",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13)),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 12, color: Colors.white),
+                ],
+              ),
             ),
           )
         ],
@@ -345,10 +482,10 @@ class _LaporanPageState extends State<LaporanPage> {
 
   Widget _buildQuickAccessGrid() {
     final tools = [
-      {'i': Icons.verified_user_rounded, 'l': 'Keamanan'},
-      {'i': Icons.home_repair_service_rounded, 'l': 'Perbaikan'},
-      {'i': Icons.eco_rounded, 'l': 'Lingkungan'},
-      {'i': Icons.grid_view_rounded, 'l': 'Lainnya'},
+      {'i': Icons.shield_outlined, 'l': 'Keamanan'},
+      {'i': Icons.build_circle_outlined, 'l': 'Perbaikan'},
+      {'i': Icons.wb_sunny_outlined, 'l': 'Lingkungan'},
+      {'i': Icons.widgets_outlined, 'l': 'Lainnya'},
     ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -356,17 +493,26 @@ class _LaporanPageState extends State<LaporanPage> {
           .map((t) => Column(
                 children: [
                   Container(
-                    height: 60,
-                    width: 60,
+                    height: 65,
+                    width: 65,
                     decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(18)),
-                    child: Icon(t['i'] as IconData, color: _primaryBlue),
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5))
+                        ]),
+                    child:
+                        Icon(t['i'] as IconData, color: _accentBlue, size: 28),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(t['l'] as String,
-                      style: const TextStyle(
-                          fontSize: 11, fontWeight: FontWeight.w600)),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: _darkText,
+                          fontWeight: FontWeight.w700)),
                 ],
               ))
           .toList(),
@@ -374,29 +520,56 @@ class _LaporanPageState extends State<LaporanPage> {
   }
 
   Widget _buildHistoryList() {
-    if (_isLoading)
-      return const Center(child: CircularProgressIndicator.adaptive());
+    if (_isLoading) {
+      return const Center(
+          child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: CircularProgressIndicator.adaptive(),
+      ));
+    }
+
+    if (_reports.isEmpty) {
+      return Container(
+        height: 100,
+        alignment: Alignment.center,
+        child: const Text("Belum ada riwayat laporan"),
+      );
+    }
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _reports.length > 3 ? 3 : _reports.length,
+      itemCount: _reports.length > 5 ? 5 : _reports.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final r = _reports[index];
         return Container(
           decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(16)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.black.withOpacity(0.02))),
           child: ListTile(
-            leading: CircleAvatar(
-                backgroundColor: _bgLight,
-                child: Icon(Icons.receipt_long_rounded,
-                    color: _primaryBlue, size: 18)),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    color: _softBlue, borderRadius: BorderRadius.circular(12)),
+                child: Icon(Icons.description_outlined,
+                    color: _accentBlue, size: 20)),
             title: Text(r.judul,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: Text(r.status,
-                style: TextStyle(color: _accentBlue, fontSize: 12)),
-            trailing: const Icon(Icons.chevron_right_rounded),
+            subtitle: Text(r.status.toUpperCase(),
+                style: TextStyle(
+                    color: _accentBlue,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1)),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                size: 14, color: Colors.grey),
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -407,21 +580,84 @@ class _LaporanPageState extends State<LaporanPage> {
     );
   }
 
-  Widget _buildSectionLabel(String text) {
-    return Text(text,
-        style: TextStyle(
-            color: _darkText, fontSize: 16, fontWeight: FontWeight.w900));
+  Widget _buildGuideSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          _guideTile(Icons.add_circle_outline, "Buat Laporan",
+              "Isi formulir dengan detail kejadian"),
+          const Divider(height: 24),
+          _guideTile(Icons.timer_outlined, "Pantau Status",
+              "Cek progres secara real-time di sini"),
+        ],
+      ),
+    );
+  }
+
+  Widget _guideTile(IconData icon, String title, String desc) {
+    return Row(
+      children: [
+        Icon(icon, color: _accentBlue, size: 24),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(desc,
+                style: const TextStyle(color: Colors.grey, fontSize: 11)),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title,
+            style: TextStyle(
+                color: _darkText, fontSize: 18, fontWeight: FontWeight.w900)),
+        Text(subtitle,
+            style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 12,
+                fontWeight: FontWeight.w500)),
+      ],
+    );
   }
 
   Widget _statusBadge(String status) {
+    Color color;
+    switch (status.toLowerCase()) {
+      case 'selesai':
+        color = const Color(0xFF10B981);
+        break;
+      case 'ditolak':
+        color = const Color(0xFFEF4444);
+        break;
+      default:
+        color = _accentBlue;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-          color: _primaryBlue.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8)),
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10)),
       child: Text(status.toUpperCase(),
           style: TextStyle(
-              color: _primaryBlue, fontSize: 10, fontWeight: FontWeight.w900)),
+              color: color,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1)),
     );
   }
 }
