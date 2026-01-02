@@ -26,8 +26,9 @@ class Pengaduan {
   });
 
   // Getter untuk URL foto
-  String? get fotoUrl =>
-      foto != null ? "http://10.0.2.2:8000/storage/$foto" : null;
+  String? get fotoUrl => foto != null
+      ? "https://backend-mobile.projecttkuuu.my.id/storage/$foto"
+      : null;
 
   factory Pengaduan.fromJson(Map<String, dynamic> json) {
     return Pengaduan(
