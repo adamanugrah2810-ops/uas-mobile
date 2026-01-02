@@ -5,9 +5,11 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mobile_auth/models/pengaduan.model.dart';
 
 class PengaduanService {
-  static const String baseUrl = 'https://backend-mobile.projecttkuuu.my.id/api';
-// static const String baseUrl = 'http://127.0.0.1:8000/api';
-// final String baseUrl = 'https://10.0.2.2:8000/api';
+  /// BASE URL (WAJIB STATIC)
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  // static const String baseUrl = 'http://127.0.0.1:8000/api';
+  // static const String baseUrl = 'https://backend-mobile.projecttkuuu.my.id/api';
+
   /// ===============================
   /// KIRIM PENGADUAN (MULTIPART)
   /// ===============================
@@ -70,7 +72,9 @@ class PengaduanService {
     }
   }
 
-  /// Ambil pengaduan milik user
+  /// ===============================
+  /// AMBIL PENGADUAN SAYA
+  /// ===============================
   static Future<List<Pengaduan>> getPengaduanSaya({
     required String token,
   }) async {
@@ -93,9 +97,9 @@ class PengaduanService {
     }
   }
 
-  /// ========================================
-  /// UPDATE PENGADUAN MASYARAKAT (MULTIPART)
-  /// ========================================
+  /// ===============================
+  /// UPDATE PENGADUAN
+  /// ===============================
   static Future<Map<String, dynamic>> updatePengaduan({
     required String token,
     required int id,
@@ -108,10 +112,7 @@ class PengaduanService {
     required String kelurahan,
     File? foto,
   }) async {
-    // URL DIUBAH: Mengarah ke endpoint updateMasyarakat yang baru kita buat
     final uri = Uri.parse('$baseUrl/pengaduan-update/$id');
-
-    // Menggunakan POST karena membawa File (Multipart)
     final request = http.MultipartRequest('POST', uri);
 
     request.headers.addAll({
@@ -119,7 +120,6 @@ class PengaduanService {
       'Accept': 'application/json',
     });
 
-    // Masukkan data teks
     request.fields.addAll({
       'judul': judul,
       'deskripsi': deskripsi,
@@ -130,7 +130,6 @@ class PengaduanService {
       'kelurahan': kelurahan,
     });
 
-    // Masukkan foto jika ada yang baru
     if (foto != null) {
       request.files.add(
         await http.MultipartFile.fromPath(
@@ -154,14 +153,15 @@ class PengaduanService {
     } else {
       return {
         'success': false,
-        'message':
-            decoded['message'] ?? 'Gagal memperbarui pengaduan (Akses Ditolak)',
+        'message': decoded['message'] ?? 'Gagal memperbarui pengaduan',
         'errors': decoded['errors'],
       };
     }
   }
 
-  /// Hapus pengaduan
+  /// ===============================
+  /// HAPUS PENGADUAN
+  /// ===============================
   static Future<void> deletePengaduan({
     required String token,
     required int id,
