@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
-// Import halaman-halaman Anda
 import 'home_page.dart';
 import 'profile_page.dart';
 import 'laporan/laporan_page.dart';
